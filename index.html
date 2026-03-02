@@ -1141,9 +1141,9 @@
 
 <script>
 var CMS_ACCOUNTS=[
-  {id:'admin',pw:'Cms@2026!adm',name:'관리자',role:'admin'},
-  {id:'site',pw:'Site#8832!go',name:'현장소장',role:'site'},
-  {id:'hq',pw:'Hq$4519!mng',name:'본사',role:'hq'}
+  {id:'admin',pw:'Demo@2026!adm',name:'관리자',role:'admin'},
+  {id:'site',pw:'Demo#1234!go',name:'현장소장',role:'site'},
+  {id:'hq',pw:'Demo$5678!mng',name:'본사',role:'hq'}
 ];
 function doLogin(){
   var id=document.getElementById('login-id').value.trim();
@@ -1237,7 +1237,7 @@ window.cmsLogout=function(){
         <div class="user-avatar">👤</div>
         <div style="flex:1">
           <div class="user-name" id="cms-user-name">관리자</div>
-          <div class="user-role">현장소장 · 강남1공구</div>
+          <div class="user-role">현장소장 · 샘플1공구</div>
         </div>
       </div>
       <button onclick="cmsLogout()" style="width:100%;padding:8px;background:rgba(192,57,43,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(192,57,43,0.1)'">🚪 로그아웃</button>
@@ -1251,7 +1251,7 @@ window.cmsLogout=function(){
     <div class="topbar-title" id="topbar-title">현황 대시보드</div>
     <div class="topbar-project">
       <div class="project-dot"></div>
-      <span>강남 복합개발 1공구</span>
+      <span>샘플 복합개발 1공구</span>
       <span style="color:var(--text3)">▾</span>
     </div>
     <div class="topbar-btn" title="검색">🔍</div>
@@ -1275,7 +1275,7 @@ window.cmsLogout=function(){
       <div class="page-header">
         <div>
           <div class="page-title">현황 대시보드</div>
-          <div class="page-subtitle">강남 복합개발 1공구 · 2025년 2월 기준</div>
+          <div class="page-subtitle">샘플 복합개발 1공구 · 2025년 2월 기준</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary">📥 엑셀 다운</button>
@@ -1293,12 +1293,12 @@ window.cmsLogout=function(){
         </div>
         <div class="kpi-card blue">
           <div class="kpi-label">총 도급금액</div>
-          <div class="kpi-value">84.2억</div>
-          <div class="kpi-change" style="color:var(--text3)">기성 57.6억 / 잔여 26.6억</div>
+          <div class="kpi-value">52.0억</div>
+          <div class="kpi-change" style="color:var(--text3)">기성 34.8억 / 잔여 17.2억</div>
         </div>
         <div class="kpi-card yellow">
           <div class="kpi-label">이번달 자재 발주</div>
-          <div class="kpi-value">1.8억</div>
+          <div class="kpi-value">1.2억</div>
           <div class="kpi-change down">▲ 12% 전월比</div>
         </div>
         <div class="kpi-card purple">
@@ -1319,32 +1319,32 @@ window.cmsLogout=function(){
           <div class="card-body">
             <div class="chart-bars">
               <div class="bar-item">
-                <div class="bar-val">6.2억</div>
+                <div class="bar-val">3.8억</div>
                 <div class="bar-fill" style="height:62%;background:var(--accent);opacity:0.6"></div>
                 <div class="bar-label">9월</div>
               </div>
               <div class="bar-item">
-                <div class="bar-val">7.1억</div>
+                <div class="bar-val">4.3억</div>
                 <div class="bar-fill" style="height:71%;background:var(--accent);opacity:0.7"></div>
                 <div class="bar-label">10월</div>
               </div>
               <div class="bar-item">
-                <div class="bar-val">8.4억</div>
+                <div class="bar-val">5.1억</div>
                 <div class="bar-fill" style="height:84%;background:var(--accent);opacity:0.8"></div>
                 <div class="bar-label">11월</div>
               </div>
               <div class="bar-item">
-                <div class="bar-val">7.8억</div>
+                <div class="bar-val">4.7억</div>
                 <div class="bar-fill" style="height:78%;background:var(--accent);opacity:0.9"></div>
                 <div class="bar-label">12월</div>
               </div>
               <div class="bar-item">
-                <div class="bar-val">9.2억</div>
+                <div class="bar-val">5.6억</div>
                 <div class="bar-fill" style="height:92%;background:var(--accent)"></div>
                 <div class="bar-label">1월</div>
               </div>
               <div class="bar-item">
-                <div class="bar-val">8.9억</div>
+                <div class="bar-val">5.4억</div>
                 <div class="bar-fill" style="height:89%;background:var(--accent2)"></div>
                 <div class="bar-label">2월</div>
               </div>
@@ -1472,16 +1472,16 @@ window.cmsLogout=function(){
           <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
             <div class="kpi-card blue">
               <div class="kpi-label">도급 계약금액</div>
-              <div class="kpi-value">84.2억</div>
+              <div class="kpi-value">52.0억</div>
             </div>
             <div class="kpi-card green">
               <div class="kpi-label">기성 누계</div>
-              <div class="kpi-value">57.6억</div>
-              <div class="kpi-change" style="color:var(--text3)">68.4% 완료</div>
+              <div class="kpi-value">34.8억</div>
+              <div class="kpi-change" style="color:var(--text3)">66.9% 완료</div>
             </div>
             <div class="kpi-card yellow">
               <div class="kpi-label">잔여 기성</div>
-              <div class="kpi-value">26.6억</div>
+              <div class="kpi-value">17.2억</div>
             </div>
           </div>
 
@@ -1500,36 +1500,36 @@ window.cmsLogout=function(){
                 <tr>
                   <td><span class="amount">CT-2024-001</span></td>
                   <td>강전포설</td>
-                  <td class="amount">12,400,000,000</td>
-                  <td class="amount" style="color:var(--accent3)">+240,000,000</td>
-                  <td class="amount" style="color:var(--accent)">12,640,000,000</td>
+                  <td class="amount">7,600,000,000</td>
+                  <td class="amount" style="color:var(--accent3)">+150,000,000</td>
+                  <td class="amount" style="color:var(--accent)">7,750,000,000</td>
                   <td><span class="badge badge-green">진행중</span></td>
                   <td style="color:var(--text3)">2024.03.15</td>
                 </tr>
                 <tr>
                   <td><span class="amount">CT-2024-002</span></td>
                   <td>입선</td>
-                  <td class="amount">34,800,000,000</td>
+                  <td class="amount">21,500,000,000</td>
                   <td class="amount" style="color:var(--text3)">-</td>
-                  <td class="amount" style="color:var(--accent)">34,800,000,000</td>
+                  <td class="amount" style="color:var(--accent)">21,500,000,000</td>
                   <td><span class="badge badge-green">진행중</span></td>
                   <td style="color:var(--text3)">2024.03.15</td>
                 </tr>
                 <tr>
                   <td><span class="amount">CT-2024-003</span></td>
                   <td>트레이</td>
-                  <td class="amount">18,200,000,000</td>
-                  <td class="amount" style="color:var(--danger)">-500,000,000</td>
-                  <td class="amount" style="color:var(--accent)">17,700,000,000</td>
+                  <td class="amount">11,200,000,000</td>
+                  <td class="amount" style="color:var(--danger)">-300,000,000</td>
+                  <td class="amount" style="color:var(--accent)">10,900,000,000</td>
                   <td><span class="badge badge-blue">검토중</span></td>
                   <td style="color:var(--text3)">2024.04.01</td>
                 </tr>
                 <tr>
                   <td><span class="amount">CT-2024-004</span></td>
                   <td>배선기구</td>
-                  <td class="amount">4,200,000,000</td>
+                  <td class="amount">2,600,000,000</td>
                   <td class="amount" style="color:var(--text3)">-</td>
-                  <td class="amount" style="color:var(--accent)">4,200,000,000</td>
+                  <td class="amount" style="color:var(--accent)">2,600,000,000</td>
                   <td><span class="badge badge-gray">대기</span></td>
                   <td style="color:var(--text3)">2024.06.01</td>
                 </tr>
@@ -1543,8 +1543,8 @@ window.cmsLogout=function(){
             <table class="table">
               <thead><tr><th>회차</th><th>기성기간</th><th>신청금액</th><th>승인금액</th><th>승인일</th><th>상태</th></tr></thead>
               <tbody>
-                <tr><td>7회차</td><td>2025.01.01~01.31</td><td class="amount">920,000,000</td><td class="amount" style="color:var(--accent)">915,000,000</td><td>2025.02.10</td><td><span class="badge badge-green">승인완료</span></td></tr>
-                <tr><td>8회차</td><td>2025.02.01~02.28</td><td class="amount">890,000,000</td><td class="amount" style="color:var(--text3)">검토중</td><td>-</td><td><span class="badge badge-yellow">검토중</span></td></tr>
+                <tr><td>7회차</td><td>2025.01.01~01.31</td><td class="amount">560,000,000</td><td class="amount" style="color:var(--accent)">555,000,000</td><td>2025.02.10</td><td><span class="badge badge-green">승인완료</span></td></tr>
+                <tr><td>8회차</td><td>2025.02.01~02.28</td><td class="amount">540,000,000</td><td class="amount" style="color:var(--text3)">검토중</td><td>-</td><td><span class="badge badge-yellow">검토중</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -1566,9 +1566,9 @@ window.cmsLogout=function(){
       </div>
 
       <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="kpi-card green"><div class="kpi-label">실행 예산</div><div class="kpi-value">76.8억</div></div>
-        <div class="kpi-card yellow"><div class="kpi-label">투입 원가</div><div class="kpi-value">52.4억</div></div>
-        <div class="kpi-card blue"><div class="kpi-label">실행 잔액</div><div class="kpi-value">24.4억</div></div>
+        <div class="kpi-card green"><div class="kpi-label">실행 예산</div><div class="kpi-value">48.5억</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">투입 원가</div><div class="kpi-value">32.1억</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">실행 잔액</div><div class="kpi-value">16.4억</div></div>
       </div>
 
       <div class="card">
@@ -1577,19 +1577,19 @@ window.cmsLogout=function(){
           <thead><tr><th>공종</th><th>실행금액</th><th>투입금액</th><th>잔액</th><th>집행률</th><th>비고</th></tr></thead>
           <tbody>
             <tr>
-              <td>강전포설</td><td class="amount">8,400,000,000</td><td class="amount">8,200,000,000</td>
-              <td class="amount" style="color:var(--accent3)">200,000,000</td>
+              <td>강전포설</td><td class="amount">5,200,000,000</td><td class="amount">5,050,000,000</td>
+              <td class="amount" style="color:var(--accent3)">150,000,000</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
                   <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:97%;background:var(--accent3)"></div></div>
-                  <span style="font-size:12px">97.6%</span>
+                  <span style="font-size:12px">97.1%</span>
                 </div>
               </td>
               <td><span class="badge badge-yellow">주의</span></td>
             </tr>
             <tr>
-              <td>RC공사</td><td class="amount">28,000,000,000</td><td class="amount">18,400,000,000</td>
-              <td class="amount" style="color:var(--accent)">9,600,000,000</td>
+              <td>RC공사</td><td class="amount">17,200,000,000</td><td class="amount">11,300,000,000</td>
+              <td class="amount" style="color:var(--accent)">5,900,000,000</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
                   <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:65%;background:var(--accent)"></div></div>
@@ -1599,8 +1599,8 @@ window.cmsLogout=function(){
               <td><span class="badge badge-green">정상</span></td>
             </tr>
             <tr>
-              <td>입선</td><td class="amount">16,200,000,000</td><td class="amount">12,800,000,000</td>
-              <td class="amount" style="color:var(--accent)">3,400,000,000</td>
+              <td>입선</td><td class="amount">9,800,000,000</td><td class="amount">7,740,000,000</td>
+              <td class="amount" style="color:var(--accent)">2,060,000,000</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
                   <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:79%;background:var(--accent2)"></div></div>
@@ -1708,9 +1708,9 @@ window.cmsLogout=function(){
             <table class="table">
               <thead><tr><th>발주번호</th><th>자재명</th><th>수량</th><th>단가</th><th>발주금액</th><th>납품예정일</th><th>상태</th></tr></thead>
               <tbody>
-                <tr><td class="amount">PO-2025-0221</td><td>철근 D16</td><td class="amount">15 TON</td><td class="amount">980,000</td><td class="amount" style="color:var(--accent)">14,700,000</td><td>2025.02.26</td><td><span class="badge badge-blue">입고예정</span></td></tr>
-                <tr><td class="amount">PO-2025-0218</td><td>레미콘 25-21-150</td><td class="amount">100 ㎥</td><td class="amount">82,000</td><td class="amount" style="color:var(--accent)">8,200,000</td><td>2025.02.24</td><td><span class="badge badge-yellow">배송중</span></td></tr>
-                <tr><td class="amount">PO-2025-0215</td><td>유로폼</td><td class="amount">500 장</td><td class="amount">25,000</td><td class="amount" style="color:var(--accent)">12,500,000</td><td>2025.02.28</td><td><span class="badge badge-gray">발주완료</span></td></tr>
+                <tr><td class="amount">PO-2025-0221</td><td>철근 D16</td><td class="amount">15 TON</td><td class="amount">780,000</td><td class="amount" style="color:var(--accent)">11,700,000</td><td>2025.02.26</td><td><span class="badge badge-blue">입고예정</span></td></tr>
+                <tr><td class="amount">PO-2025-0218</td><td>레미콘 25-21-150</td><td class="amount">100 ㎥</td><td class="amount">72,000</td><td class="amount" style="color:var(--accent)">7,200,000</td><td>2025.02.24</td><td><span class="badge badge-yellow">배송중</span></td></tr>
+                <tr><td class="amount">PO-2025-0215</td><td>유로폼</td><td class="amount">500 장</td><td class="amount">22,000</td><td class="amount" style="color:var(--accent)">11,000,000</td><td>2025.02.28</td><td><span class="badge badge-gray">발주완료</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -2805,10 +2805,10 @@ window.cmsLogout=function(){
       </div>
 
       <div class="kpi-grid">
-        <div class="kpi-card blue"><div class="kpi-label">도급금액</div><div class="kpi-value">84.2억</div></div>
-        <div class="kpi-card yellow"><div class="kpi-label">실행금액</div><div class="kpi-value">76.8억</div></div>
-        <div class="kpi-card green"><div class="kpi-label">투입원가</div><div class="kpi-value">52.4억</div></div>
-        <div class="kpi-card purple"><div class="kpi-label">예상이익</div><div class="kpi-value" style="color:var(--accent4)">7.4억</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">도급금액</div><div class="kpi-value">52.0억</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">실행금액</div><div class="kpi-value">48.5억</div></div>
+        <div class="kpi-card green"><div class="kpi-label">투입원가</div><div class="kpi-value">32.1억</div></div>
+        <div class="kpi-card purple"><div class="kpi-label">예상이익</div><div class="kpi-value" style="color:var(--accent4)">3.5억</div></div>
       </div>
 
       <div class="card">
@@ -2818,24 +2818,24 @@ window.cmsLogout=function(){
           <tbody>
             <tr>
               <td style="font-weight:600">강전포설</td>
-              <td class="amount">12,640,000,000</td>
-              <td class="amount">8,400,000,000</td>
-              <td class="amount">8,200,000,000</td>
-              <td class="amount" style="color:var(--accent3)">200,000,000</td>
+              <td class="amount">7,750,000,000</td>
+              <td class="amount">5,200,000,000</td>
+              <td class="amount">5,050,000,000</td>
+              <td class="amount" style="color:var(--accent3)">150,000,000</td>
               <td>
                 <div style="display:flex;align-items:center;gap:6px">
                   <div class="progress-bar" style="width:60px"><div class="progress-fill" style="width:97%;background:var(--accent3)"></div></div>
-                  <span style="font-size:12px">97.6%</span>
+                  <span style="font-size:12px">97.1%</span>
                 </div>
               </td>
               <td><span class="badge badge-yellow">주의</span></td>
             </tr>
             <tr>
               <td style="font-weight:600">RC공사</td>
-              <td class="amount">34,800,000,000</td>
-              <td class="amount">28,000,000,000</td>
-              <td class="amount">18,400,000,000</td>
-              <td class="amount" style="color:var(--accent)">9,600,000,000</td>
+              <td class="amount">21,500,000,000</td>
+              <td class="amount">17,200,000,000</td>
+              <td class="amount">11,300,000,000</td>
+              <td class="amount" style="color:var(--accent)">5,900,000,000</td>
               <td>
                 <div style="display:flex;align-items:center;gap:6px">
                   <div class="progress-bar" style="width:60px"><div class="progress-fill" style="width:65%;background:var(--accent)"></div></div>
@@ -2846,10 +2846,10 @@ window.cmsLogout=function(){
             </tr>
             <tr>
               <td style="font-weight:600">입선</td>
-              <td class="amount">17,700,000,000</td>
-              <td class="amount">16,200,000,000</td>
-              <td class="amount">12,800,000,000</td>
-              <td class="amount" style="color:var(--accent)">3,400,000,000</td>
+              <td class="amount">10,900,000,000</td>
+              <td class="amount">9,800,000,000</td>
+              <td class="amount">7,740,000,000</td>
+              <td class="amount" style="color:var(--accent)">2,060,000,000</td>
               <td>
                 <div style="display:flex;align-items:center;gap:6px">
                   <div class="progress-bar" style="width:60px"><div class="progress-fill" style="width:79%;background:var(--accent2)"></div></div>
