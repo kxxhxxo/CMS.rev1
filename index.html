@@ -446,6 +446,7 @@
   .badge-red { background: rgba(192,57,43,0.1); color: var(--danger); }
   .badge-blue { background: rgba(58,111,160,0.1); color: var(--accent2); }
   .badge-gray { background: rgba(110,118,129,0.15); color: var(--text3); }
+  .badge-purple { background: rgba(139,92,246,0.15); color: #7c3aed; }
 
   /* PROGRESS */
   .progress-bar {
@@ -1158,11 +1159,12 @@ function doLogin(){
   var mn=document.querySelector('.main');if(mn)mn.style.display='';
   var mt=document.getElementById('mtabbar');if(mt)mt.style.display='';
   var ne=document.getElementById('cms-user-name');if(ne)ne.textContent=acc.name;
+  var staffNav=document.getElementById('nav-staff');if(staffNav)staffNav.style.display=(acc.id==='hq'||acc.id==='admin')?'':'none';
 }
 (function(){
   function initLogin(){
     var s=sessionStorage.getItem('cms_login');
-    if(s){try{var d=JSON.parse(s);if(Date.now()-d.time<86400000){document.getElementById('login-screen').style.display='none';var ne=document.getElementById('cms-user-name');if(ne)ne.textContent=d.name;return;}}catch(e){}}
+    if(s){try{var d=JSON.parse(s);if(Date.now()-d.time<86400000){document.getElementById('login-screen').style.display='none';var ne=document.getElementById('cms-user-name');if(ne)ne.textContent=d.name;var sn=document.getElementById('nav-staff');if(sn)sn.style.display=(d.id==='hq'||d.id==='admin')?'':'none';return;}}catch(e){}}
     var sb=document.querySelector('.sidebar');if(sb)sb.style.display='none';
     var mn=document.querySelector('.main');if(mn)mn.style.display='none';
     var mt=document.getElementById('mtabbar');if(mt)mt.style.display='none';
@@ -1196,14 +1198,17 @@ window.cmsLogout=function(){
     <span class="nav-icon">📊</span> 현황 대시보드
   </div>
 
-  <div class="sidebar-section">도급 관리</div>
+  <div class="sidebar-section">프로젝트 관리</div>
   <div class="nav-item" onclick="navigate('dogeup', this)">
-    <span class="nav-icon">📋</span> 도급관리
-    <span style="margin-left:auto;font-size:9px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px">조회</span>
+    <span class="nav-icon">🏗</span> 프로젝트 관리
   </div>
   <div class="nav-item" onclick="navigate('silhaeng', this)">
     <span class="nav-icon">📁</span> 실행관리
     <span style="margin-left:auto;font-size:9px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px">조회</span>
+  </div>
+  <div class="nav-item" id="nav-staff" onclick="navigate('staff', this)" style="display:none">
+    <span class="nav-icon">👔</span> 정규직 관리
+    <span style="margin-left:auto;font-size:9px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px">본사</span>
   </div>
 
   <div class="sidebar-section">현장 관리</div>
@@ -1382,7 +1387,7 @@ window.cmsLogout=function(){
                 <div class="timeline-dot" style="background:rgba(14,165,233,0.15);color:var(--accent2);border-color:var(--accent2)">📄</div>
                 <div class="timeline-content">
                   <div class="timeline-title">기성고서 제출 완료</div>
-                  <div class="timeline-time">어제 15:00 · 도급관리</div>
+                  <div class="timeline-time">어제 15:00 · 프로젝트 관리</div>
                 </div>
               </div>
             </div>
@@ -1448,93 +1453,286 @@ window.cmsLogout=function(){
       </div>
     </div>
 
-    <!-- ===== 도급관리 ===== -->
+    <!-- ===== 프로젝트 관리 ===== -->
     <div class="page" id="page-dogeup">
-      <div class="page-header">
-        <div>
-          <div class="page-title">도급관리</div>
-          <div class="page-subtitle">원도급사 계약 및 기성 현황 조회 (입력은 본사 전용)</div>
+
+      <!-- ===== 프로젝트 목록 화면 ===== -->
+      <div id="pj-list-view">
+        <div class="page-header">
+          <div>
+            <div class="page-title">프로젝트 관리</div>
+            <div class="page-subtitle">현장별 프로젝트 개요 및 계약 현황</div>
+          </div>
+          <div id="pj-add-btn-wrap" style="display:none">
+            <button class="btn btn-primary" onclick="openAddProjectModal()">🏗 현장 추가</button>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:5px 12px;border-radius:6px">👁 현장 조회 전용 · 입력은 본사에서</span>
-          <button class="btn btn-secondary">📥 엑셀 다운</button>
+
+        <!-- 검색 + 건수 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <input class="form-input" id="pj-search" placeholder="공사명 검색..." oninput="renderProjectList()" style="width:240px;padding:7px 12px;font-size:13px">
+            <span id="pj-list-count" style="font-size:12px;color:var(--text3)"></span>
+          </div>
+        </div>
+
+        <!-- 리스트 테이블 -->
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table class="table" id="pj-list-table">
+              <thead>
+                <tr style="background:var(--surface2)">
+                  <th style="width:40px;text-align:center">No.</th>
+                  <th style="min-width:100px">건설사</th>
+                  <th style="min-width:200px">공사명</th>
+                  <th style="min-width:70px;text-align:center">현장소장</th>
+                  <th style="min-width:70px;text-align:center">현장공무</th>
+                  <th style="min-width:100px;text-align:right">총 도급금액</th>
+                  <th style="min-width:90px;text-align:center">착공일</th>
+                  <th style="min-width:90px;text-align:center">준공예정일</th>
+                  <th style="min-width:60px;text-align:center">잔여일</th>
+                  <th style="width:50px;text-align:center" id="pj-del-th"></th>
+                </tr>
+              </thead>
+              <tbody id="pj-list-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="pj-list-empty" style="display:none">
+          <div class="empty-state"><div class="empty-icon">🏗</div><div class="empty-text">등록된 프로젝트가 없습니다.</div></div>
         </div>
       </div>
 
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab(this, 'dogeup-tab', 'tab-contract')">계약관리</div>
-        <div class="tab" onclick="switchTab(this, 'dogeup-tab', 'tab-gisung')">기성관리</div>
-        <div class="tab" onclick="switchTab(this, 'dogeup-tab', 'tab-estimate')">견적/내역작성</div>
-      </div>
+      <!-- ===== 프로젝트 상세 화면 ===== -->
+      <div id="pj-detail-view" style="display:none">
+        <div class="page-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="backToProjectList()" style="border:none;background:none;cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;color:var(--text2)" title="목록으로">←</button>
+            <div>
+              <div class="page-title" id="pj-detail-title">프로젝트 상세</div>
+              <div class="page-subtitle" id="pj-detail-subtitle"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn btn-secondary" onclick="exportProjectPDF()">📄 PDF</button>
+            <button class="btn btn-primary" onclick="saveProjectInfo()">💾 저장</button>
+          </div>
+        </div>
 
-      <div id="dogeup-tab">
-        <div id="tab-contract">
-          <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-            <div class="kpi-card blue">
-              <div class="kpi-label">도급 계약금액</div>
-              <div class="kpi-value">52.0억</div>
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this, 'dogeup-tab', 'tab-project-overview')">프로젝트 개요</div>
+          <div class="tab" onclick="switchTab(this, 'dogeup-tab', 'tab-contract');renderDogupView()">도급현황</div>
+          <div class="tab" onclick="switchTab(this, 'dogeup-tab', 'tab-gisung')">기성관리</div>
+        </div>
+
+        <div id="dogeup-tab">
+
+        <!-- ===== 프로젝트 개요 탭 ===== -->
+        <div id="tab-project-overview">
+
+          <!-- 계약 목록 (피벗형) - 맨 위 -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div class="card-title">📑 하도급 계약 현황</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-primary" onclick="addPjContractCol()" style="padding:5px 14px;font-size:12px">+ 열 추가</button>
+              </div>
             </div>
-            <div class="kpi-card green">
-              <div class="kpi-label">기성 누계</div>
-              <div class="kpi-value">34.8억</div>
-              <div class="kpi-change" style="color:var(--text3)">66.9% 완료</div>
-            </div>
-            <div class="kpi-card yellow">
-              <div class="kpi-label">잔여 기성</div>
-              <div class="kpi-value">17.2억</div>
+            <div style="padding:0 16px 16px;overflow-x:auto">
+              <table class="table" id="pj-contract-pivot" style="font-size:12px;border-collapse:collapse;border:1px solid #bdbdbd">
+                <thead id="pj-pivot-thead"></thead>
+                <tbody id="pj-pivot-tbody"></tbody>
+                <tfoot id="pj-pivot-tfoot"></tfoot>
+              </table>
             </div>
           </div>
 
+          <!-- 정부노임률 / 합계 -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header"><div class="card-title">📊 기타 정보</div></div>
+            <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+              <div>
+                <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">정부노임률 (%)</label>
+                <input class="form-input" id="pj-labor-ratio" placeholder="0" style="width:100%;text-align:right">
+              </div>
+              <div>
+                <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">최종 도급금액</label>
+                <div id="pj-grand-total" style="padding:8px 12px;background:var(--surface2);border-radius:6px;font-size:14px;font-weight:700;color:var(--accent);text-align:right;font-variant-numeric:tabular-nums">-</div>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">계약 건수</label>
+                <div id="pj-contract-count" style="padding:8px 12px;background:var(--surface2);border-radius:6px;font-size:14px;font-weight:700;color:var(--text1);text-align:center">0건</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 기본 정보 (접기/펼치기) -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header" onclick="togglePjSection('pj-sec-basic')" style="cursor:pointer;user-select:none">
+              <div class="card-title"><span id="pj-sec-basic-arrow" style="display:inline-block;transition:transform 0.2s;transform:rotate(-90deg);margin-right:4px">▶</span> 기본 정보 · 공사 기간 · 발주처</div>
+              <span style="font-size:11px;color:var(--text3)">클릭하여 펼치기</span>
+            </div>
+            <div id="pj-sec-basic" style="display:none">
+              <!-- 기본 정보 -->
+              <div style="padding:16px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">공사명</label>
+                  <input class="form-input" id="pj-name" placeholder="예: ○○ 복합개발 전기공사 1공구" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장명</label>
+                  <input class="form-input" id="pj-site-name" placeholder="예: ○○ 현장" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">주용도</label>
+                  <input class="form-input" id="pj-usage" placeholder="예: 공동주택, 오피스텔, 근린생활시설" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장 주소</label>
+                  <input class="form-input" id="pj-address" placeholder="현장 소재지 주소 입력" style="width:100%">
+                </div>
+              </div>
+              <div style="padding:12px 16px;border-top:1px dashed var(--border);margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">착공일</label>
+                  <input type="date" class="form-input" id="pj-start-date" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">준공 예정일</label>
+                  <input type="date" class="form-input" id="pj-end-date" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">잔여일수</label>
+                  <div id="pj-remain-days" style="padding:8px 12px;background:var(--surface2);border-radius:6px;font-size:14px;font-weight:700;color:var(--accent);text-align:center">-</div>
+                </div>
+              </div>
+              <div style="padding:12px 16px 16px;border-top:1px dashed var(--border);margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">발주처 (건축주)</label>
+                  <input class="form-input" id="pj-owner" placeholder="발주처명" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">원도급사 (원청)</label>
+                  <input class="form-input" id="pj-contractor" placeholder="원도급사명" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">발주처 담당자</label>
+                  <input class="form-input" id="pj-owner-contact" placeholder="담당자명 / 연락처" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">원도급사 담당자</label>
+                  <input class="form-input" id="pj-contractor-contact" placeholder="담당자명 / 연락처" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장소장</label>
+                  <input class="form-input" id="pj-site-manager" placeholder="현장소장 성명" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장공무</label>
+                  <input class="form-input" id="pj-site-admin" placeholder="현장공무 성명" style="width:100%">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 건축 개요 (접기/펼치기) -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header" onclick="togglePjSection('pj-sec-building')" style="cursor:pointer;user-select:none">
+              <div class="card-title"><span id="pj-sec-building-arrow" style="display:inline-block;transition:transform 0.2s;transform:rotate(-90deg);margin-right:4px">▶</span> 건축 개요</div>
+              <span style="font-size:11px;color:var(--text3)">클릭하여 펼치기</span>
+            </div>
+            <div id="pj-sec-building" style="display:none">
+              <div style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">공종</label>
+                  <input class="form-input" id="pj-gongjong" placeholder="예: 전기공사" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">동수</label>
+                  <input class="form-input" id="pj-dong-count" placeholder="예: 7" style="width:100%;text-align:right">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">지하층</label>
+                  <input class="form-input" id="pj-underground" placeholder="예: B3" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">지상층</label>
+                  <input class="form-input" id="pj-above-ground" placeholder="예: 29F" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">세대수</label>
+                  <input class="form-input" id="pj-unit-count" placeholder="예: 1,200" style="width:100%;text-align:right">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">연면적 (㎡)</label>
+                  <input class="form-input" id="pj-area" placeholder="예: 125,000" oninput="fmtPjAmt(this)" style="width:100%;text-align:right">
+                </div>
+                <div style="grid-column:span 2">
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">비고</label>
+                  <input class="form-input" id="pj-building-note" placeholder="기타 건축 개요 메모" style="width:100%">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /tab-project-overview -->
+
+        <!-- ===== 도급현황 탭 ===== -->
+        <div id="tab-contract" style="display:none">
+          <!-- KPI 카드 (동적) -->
+          <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="kpi-card blue">
+              <div class="kpi-label">도급 계약금액</div>
+              <div class="kpi-value" id="dogup-kpi-total">-</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-label">당초계약</div>
+              <div class="kpi-value" id="dogup-kpi-initial">-</div>
+            </div>
+            <div class="kpi-card yellow">
+              <div class="kpi-label">변경/추가 합계</div>
+              <div class="kpi-value" id="dogup-kpi-change">-</div>
+            </div>
+          </div>
+
+          <!-- 구분별 필터 -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="dogup-filter-wrap"></div>
+
+          <!-- 계약 테이블 (동적) -->
           <div class="card">
             <div class="card-header">
               <div class="card-title">계약 내역</div>
-              <input class="form-input" style="width:200px;padding:6px 10px" placeholder="🔍 검색...">
+              <span style="font-size:11px;color:var(--text3)">프로젝트 개요에서 등록한 계약이 표시됩니다</span>
             </div>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>계약번호</th><th>공종</th><th>계약금액</th><th>변경금액</th><th>최종금액</th><th>상태</th><th>계약일</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="amount">CT-2024-001</span></td>
-                  <td>강전포설</td>
-                  <td class="amount">7,600,000,000</td>
-                  <td class="amount" style="color:var(--accent3)">+150,000,000</td>
-                  <td class="amount" style="color:var(--accent)">7,750,000,000</td>
-                  <td><span class="badge badge-green">진행중</span></td>
-                  <td style="color:var(--text3)">2024.03.15</td>
-                </tr>
-                <tr>
-                  <td><span class="amount">CT-2024-002</span></td>
-                  <td>입선</td>
-                  <td class="amount">21,500,000,000</td>
-                  <td class="amount" style="color:var(--text3)">-</td>
-                  <td class="amount" style="color:var(--accent)">21,500,000,000</td>
-                  <td><span class="badge badge-green">진행중</span></td>
-                  <td style="color:var(--text3)">2024.03.15</td>
-                </tr>
-                <tr>
-                  <td><span class="amount">CT-2024-003</span></td>
-                  <td>트레이</td>
-                  <td class="amount">11,200,000,000</td>
-                  <td class="amount" style="color:var(--danger)">-300,000,000</td>
-                  <td class="amount" style="color:var(--accent)">10,900,000,000</td>
-                  <td><span class="badge badge-blue">검토중</span></td>
-                  <td style="color:var(--text3)">2024.04.01</td>
-                </tr>
-                <tr>
-                  <td><span class="amount">CT-2024-004</span></td>
-                  <td>배선기구</td>
-                  <td class="amount">2,600,000,000</td>
-                  <td class="amount" style="color:var(--text3)">-</td>
-                  <td class="amount" style="color:var(--accent)">2,600,000,000</td>
-                  <td><span class="badge badge-gray">대기</span></td>
-                  <td style="color:var(--text3)">2024.06.01</td>
-                </tr>
-              </tbody>
-            </table>
+            <div style="overflow-x:auto">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="min-width:50px">No.</th>
+                    <th style="min-width:120px">구분</th>
+                    <th style="min-width:100px">공종명</th>
+                    <th style="min-width:120px;text-align:right">공급가액</th>
+                    <th style="min-width:100px;text-align:right">부가세</th>
+                    <th style="min-width:130px;text-align:right">도급금액</th>
+                    <th style="min-width:90px;text-align:center">계약일</th>
+                    <th style="min-width:90px;text-align:center">공사기간</th>
+                  </tr>
+                </thead>
+                <tbody id="dogup-view-tbody">
+                  <tr><td colspan="8" style="padding:30px;text-align:center;color:var(--text3)">프로젝트 개요에서 계약을 등록해 주세요.</td></tr>
+                </tbody>
+                <tfoot id="dogup-view-tfoot" style="display:none">
+                  <tr style="background:var(--surface2);font-weight:700">
+                    <td colspan="3" style="padding:8px 10px">합계</td>
+                    <td style="padding:8px 10px;text-align:right" id="dogup-sum-supply">-</td>
+                    <td style="padding:8px 10px;text-align:right" id="dogup-sum-vat">-</td>
+                    <td style="padding:8px 10px;text-align:right;color:var(--accent)" id="dogup-sum-total">-</td>
+                    <td colspan="2"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
         </div>
         <div id="tab-gisung" style="display:none">
@@ -1549,9 +1747,361 @@ window.cmsLogout=function(){
             </table>
           </div>
         </div>
-        <div id="tab-estimate" style="display:none">
-          <div class="empty-state"><div class="empty-icon">📐</div><div class="empty-text">견적/내역 작성 기능은 개발 예정입니다.</div></div>
+        </div><!-- /dogeup-tab -->
+      </div><!-- /pj-detail-view -->
+
+    </div>
+
+    <!-- ===== 정규직 관리 ===== -->
+    <div class="page" id="page-staff">
+      <div class="page-header">
+        <div>
+          <div class="page-title">정규직 관리</div>
+          <div class="page-subtitle">정규직 인력 등록 및 관리 (본사 전용)</div>
         </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" style="padding:6px 12px;font-size:12px" onclick="openStaffForm()">+ 직원 등록</button>
+        </div>
+      </div>
+
+      <!-- 검색/필터 -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div class="card-title">직원 명부</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="form-input" placeholder="이름 검색..." style="width:150px;padding:6px 10px" id="staff-search" oninput="renderStaffList()">
+            <select class="form-select" style="width:100px;padding:6px" id="staff-filter-type" onchange="renderStaffList()">
+              <option value="">전체</option>
+              <option value="본사">본사</option>
+              <option value="현장">현장</option>
+            </select>
+            <select class="form-select" style="width:100px;padding:6px" id="staff-filter-status" onchange="renderStaffList()">
+              <option value="">전체</option>
+              <option value="재직">재직</option>
+              <option value="휴직">휴직</option>
+              <option value="퇴직">퇴직</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="table" style="min-width:900px">
+            <thead>
+              <tr>
+                <th style="min-width:60px;text-align:center">구분</th>
+                <th style="min-width:70px">이름</th>
+                <th style="min-width:80px">직종/팀명</th>
+                <th style="min-width:60px">직급</th>
+                <th style="min-width:80px">배치</th>
+                <th style="min-width:110px">연락처</th>
+                <th style="min-width:90px">입사일</th>
+                <th style="min-width:60px;text-align:center">상태</th>
+                <th style="min-width:100px"></th>
+              </tr>
+            </thead>
+            <tbody id="staff-tbody">
+              <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 직원이 없습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 직원 등록/수정 폼 (인라인) -->
+      <div id="staff-form-panel" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="staff-form-title">직원 등록</div>
+            <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="closeStaffForm()">✕ 닫기</button>
+          </div>
+          <div style="padding:20px">
+
+            <!-- 스텝 진행 표시 -->
+            <div style="display:flex;align-items:center;margin-bottom:24px">
+              <div class="step-node active" id="sf-snode-1" onclick="switchStaffStep(1)"><span>1</span></div>
+              <div class="step-line" id="sf-sline-1"></div>
+              <div class="step-node" id="sf-snode-2" onclick="switchStaffStep(2)"><span>2</span></div>
+              <div class="step-line" id="sf-sline-2"></div>
+              <div class="step-node" id="sf-snode-3" onclick="switchStaffStep(3)"><span>3</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:-18px;margin-bottom:20px;padding:0 4px">
+              <span style="font-size:11px;color:var(--text3);font-weight:600">기본정보</span>
+              <span style="font-size:11px;color:var(--text3);font-weight:600">신상정보</span>
+              <span style="font-size:11px;color:var(--text3);font-weight:600">계좌정보</span>
+            </div>
+
+            <!-- ① 기본정보 -->
+            <div id="sf-step-1">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label required">구분</label>
+                  <div style="display:flex;gap:8px">
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 18px;border:2px solid var(--border);border-radius:8px;cursor:pointer;flex:1;transition:all 0.15s" id="sf-type-label-hq" onclick="onStaffTypeChange('본사')">
+                      <input type="radio" name="sf-type" value="본사" id="sf-type-hq" style="accent-color:var(--accent);width:16px;height:16px">
+                      <div><div style="font-weight:700;font-size:13px">🏢 본사</div></div>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 18px;border:2px solid var(--border);border-radius:8px;cursor:pointer;flex:1;transition:all 0.15s" id="sf-type-label-site" onclick="onStaffTypeChange('현장')">
+                      <input type="radio" name="sf-type" value="현장" id="sf-type-site" style="accent-color:var(--accent);width:16px;height:16px">
+                      <div><div style="font-weight:700;font-size:13px">🏗 현장</div></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label required">이름</label>
+                  <input class="form-input" id="sf-name" placeholder="홍길동">
+                </div>
+                <div class="form-group">
+                  <label class="form-label required">연락처</label>
+                  <input class="form-input" id="sf-phone" placeholder="010-0000-0000" oninput="formatPhone(this)">
+                </div>
+              </div>
+
+              <!-- 직종/직급/팀명 (본사/현장에 따라 동적 변경) -->
+              <div id="sf-job-rank-area">
+                <div class="form-grid-2">
+                  <div class="form-group" id="sf-job-group">
+                    <label class="form-label required" id="sf-job-label">직종</label>
+                    <select class="form-select" id="sf-job">
+                      <option value="">-- 선택 --</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="sf-rank-group" style="display:none">
+                    <label class="form-label required">직급</label>
+                    <select class="form-select" id="sf-rank">
+                      <option value="">-- 직급 선택 --</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <!-- 팀명 hidden input (본사 선택 시 sf-job을 팀명으로 쓰므로 별도 보관) -->
+              <input type="hidden" id="sf-team" value="">
+
+              <!-- ── 급여 정보 ── -->
+              <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:14px">
+                <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--accent)">💰 급여 정보</div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label required">기본급</label>
+                    <input class="form-input" id="sf-wage" placeholder="예: 3,500,000" oninput="fmtComma(this);calcStaffPay()" style="text-align:right;font-variant-numeric:tabular-nums;background:#fff">
+                  </div>
+                  <div class="form-group" id="sf-car-group">
+                    <label class="form-label" id="sf-car-label">자가운전보조금</label>
+                    <div id="sf-car-fixed" style="padding:8px 12px;background:#fff;border-radius:6px;border:1px solid var(--border);text-align:right;font-weight:700;font-size:13px;color:var(--text1)">350,000</div>
+                    <input class="form-input" id="sf-car-input" placeholder="0" oninput="fmtComma(this);calcStaffPay()" style="text-align:right;font-variant-numeric:tabular-nums;background:#fff;display:none">
+                    <div id="sf-car-note" style="font-size:10px;color:var(--text3);margin-top:2px">고정 35만원</div>
+                  </div>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group" id="sf-meal-group">
+                    <label class="form-label">식대 (비과세)</label>
+                    <div style="padding:8px 12px;background:#fff;border-radius:6px;border:1px solid var(--border);text-align:right;font-weight:700;font-size:13px;color:var(--text1)">200,000</div>
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">고정 20만원 · 비과세</div>
+                  </div>
+                  <div class="form-group" id="sf-family-allow-group">
+                    <label class="form-label" id="sf-allow-label">가족수당 / 자녀수당</label>
+                    <div id="sf-allow-display" style="padding:8px 12px;background:#fff;border-radius:6px;border:1px solid var(--border);text-align:right;font-weight:700;font-size:13px;color:var(--accent)">0</div>
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">아래 가족정보 입력 시 자동계산</div>
+                  </div>
+                </div>
+
+                <!-- 지급 합계 -->
+                <div style="margin-top:10px;padding:10px 12px;background:#e8f5e9;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;font-weight:700;color:#2e7d32">총 지급액</span>
+                  <span id="sf-pay-total" style="font-size:16px;font-weight:900;color:#2e7d32">0</span>
+                </div>
+              </div>
+
+              <!-- ── 가족 정보 ── -->
+              <div style="background:#fff8e1;border-radius:10px;padding:16px;margin-bottom:14px">
+                <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#b8860b">👨‍👩‍👧‍👦 가족 정보</div>
+                <div class="form-grid-2" style="margin-bottom:8px">
+                  <div class="form-group">
+                    <label class="form-label">배우자 유무</label>
+                    <select class="form-select" id="sf-spouse" onchange="calcStaffPay()">
+                      <option value="N">없음</option>
+                      <option value="Y">있음</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">가족수당</label>
+                    <input class="form-input" id="sf-family-amt" placeholder="0" oninput="fmtComma(this);calcStaffPay()" style="text-align:right;font-variant-numeric:tabular-nums">
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px">배우자 있을 시 지급 금액</div>
+                  </div>
+                </div>
+                <div class="form-grid-2" style="margin-bottom:8px">
+                  <div class="form-group">
+                    <label class="form-label" id="sf-children-label">자녀수</label>
+                    <select class="form-select" id="sf-children" onchange="calcStaffPay()">
+                      <option value="0">0명</option>
+                      <option value="1">1명</option>
+                      <option value="2">2명</option>
+                      <option value="3">3명</option>
+                      <option value="4">4명</option>
+                      <option value="5">5명 이상</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" id="sf-child-amt-label">자녀수당 (1인당)</label>
+                    <input class="form-input" id="sf-child-amt" placeholder="0" oninput="fmtComma(this);calcStaffPay()" style="text-align:right;font-variant-numeric:tabular-nums">
+                    <div style="font-size:10px;color:var(--text3);margin-top:2px" id="sf-child-amt-note">자녀 1인당 지급 금액</div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">부양가족수 (본인 포함)</label>
+                  <select class="form-select" id="sf-dependents" onchange="calcStaffPay()" style="max-width:200px">
+                    <option value="1">1명 (본인)</option>
+                    <option value="2">2명</option>
+                    <option value="3">3명</option>
+                    <option value="4">4명</option>
+                    <option value="5">5명</option>
+                    <option value="6">6명</option>
+                    <option value="7">7명 이상</option>
+                  </select>
+                  <div style="font-size:10px;color:var(--text3);margin-top:2px">소득세 간이세액 산출에 반영됩니다</div>
+                </div>
+              </div>
+
+              <!-- ── 공제 항목 (자동계산) ── -->
+              <div style="background:#fce4ec;border-radius:10px;padding:16px;margin-bottom:14px">
+                <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#c62828">📋 공제 항목 (자동계산)</div>
+                <table style="width:100%;font-size:12px;border-collapse:collapse">
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">국민연금 (4.5%)</td><td id="sf-ded-pension" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">0</td></tr>
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">건강보험 (3.545%)</td><td id="sf-ded-health" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">0</td></tr>
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">장기요양 (건강보험의 12.81%)</td><td id="sf-ded-longcare" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">0</td></tr>
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">고용보험 (0.9%)</td><td id="sf-ded-employ" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">0</td></tr>
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">소득세 (간이세액)</td><td id="sf-ded-incometax" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">0</td></tr>
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">지방소득세 (소득세 10%)</td><td id="sf-ded-localtax" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">0</td></tr>
+                  <tr style="border-bottom:1px solid #f8bbd0"><td style="padding:6px 0;color:var(--text2)">상조회비 <select id="sf-funeral-yn" onchange="calcStaffPay()" style="font-size:11px;padding:2px 4px;margin-left:6px;border-radius:4px;border:1px solid #e0e0e0"><option value="Y">가입</option><option value="N">미가입</option></select></td><td id="sf-ded-funeral" style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">25,000</td></tr>
+                </table>
+                <div style="margin-top:10px;padding:10px 12px;background:#ffcdd2;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;font-weight:700;color:#c62828">총 공제액</span>
+                  <span id="sf-ded-total" style="font-size:16px;font-weight:900;color:#c62828">0</span>
+                </div>
+              </div>
+
+              <!-- ── 실수령액 + 퇴직금 ── -->
+              <div style="background:var(--accent);border-radius:10px;padding:16px;margin-bottom:14px;color:#fff">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <span style="font-size:14px;font-weight:800">💵 실수령액</span>
+                  <span id="sf-net-pay" style="font-size:20px;font-weight:900">0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.3)">
+                  <span style="font-size:12px;font-weight:600;opacity:0.9">퇴직금 (월 적립분)</span>
+                  <span id="sf-retire-fund" style="font-size:14px;font-weight:800">0</span>
+                </div>
+                <div id="sf-retire-note" style="font-size:10px;opacity:0.7;margin-top:2px;text-align:right"></div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label required">입사일</label>
+                  <input type="date" class="form-input" id="sf-join-date">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">퇴사일</label>
+                  <input type="date" class="form-input" id="sf-leave-date">
+                  <div style="font-size:11px;color:var(--text3);margin-top:4px">재직 중이면 비워두세요</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">비고</label>
+                <textarea class="form-input" id="sf-note" rows="2" placeholder="특이사항" style="resize:vertical"></textarea>
+              </div>
+            </div>
+
+            <!-- ② 신상정보 (노무관리와 동일) -->
+            <div id="sf-step-2" style="display:none">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label required">내/외국인</label>
+                  <select class="form-select" id="sf-nationality" onchange="toggleStaffForeignFields()">
+                    <option value="domestic">내국인</option>
+                    <option value="foreign">외국인</option>
+                  </select>
+                </div>
+                <div class="form-group" id="sf-stay-code-group" style="display:none">
+                  <label class="form-label">체류 코드</label>
+                  <select class="form-select" id="sf-stay-code">
+                    <option value="">-- 선택 --</option>
+                    <option>E-7 (특정활동)</option><option>E-9 (비전문취업)</option>
+                    <option>H-2 (방문취업)</option><option>F-4 (재외동포)</option>
+                    <option>F-5 (영주)</option><option>F-6 (결혼이민)</option><option>기타</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">주민등록번호</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input class="form-input" id="sf-id-front" placeholder="000000" maxlength="6" style="width:130px" oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===6)document.getElementById('sf-id-back').focus()">
+                  <span style="color:var(--text3);font-weight:700">—</span>
+                  <input class="form-input" id="sf-id-back" placeholder="●●●●●●●" maxlength="7" type="password" style="width:140px" oninput="this.value=this.value.replace(/\D/g,'')">
+                </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px">※ 암호화 저장됩니다</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">주소</label>
+                <div style="display:flex;gap:6px;margin-bottom:6px">
+                  <input class="form-input" id="sf-zipcode" placeholder="우편번호 (선택)" style="width:130px">
+                  <button type="button" class="btn btn-secondary" style="white-space:nowrap;padding:8px 14px;font-size:12px" onclick="searchStaffAddress()">🔍 주소 검색</button>
+                  <span style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap">※ 직접 입력도 가능</span>
+                </div>
+                <input class="form-input" id="sf-address" placeholder="도로명 주소 직접 입력 가능" style="margin-bottom:6px">
+                <input class="form-input" id="sf-address-detail" placeholder="상세 주소 (동/호수 등)">
+              </div>
+            </div>
+
+            <!-- ③ 계좌정보 (노무관리와 동일) -->
+            <div id="sf-step-3" style="display:none">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">은행명</label>
+                  <select class="form-select" id="sf-bank">
+                    <option value="">-- 은행 선택 --</option>
+                    <optgroup label="시중은행">
+                      <option>국민은행</option><option>신한은행</option><option>우리은행</option>
+                      <option>하나은행</option><option>농협은행</option><option>기업은행</option>
+                      <option>SC제일은행</option><option>씨티은행</option>
+                    </optgroup>
+                    <optgroup label="지방은행">
+                      <option>부산은행</option><option>대구은행</option><option>광주은행</option>
+                      <option>전북은행</option><option>경남은행</option>
+                    </optgroup>
+                    <optgroup label="인터넷은행">
+                      <option>카카오뱅크</option><option>케이뱅크</option><option>토스뱅크</option>
+                    </optgroup>
+                    <optgroup label="기타">
+                      <option>새마을금고</option><option>신협</option><option>우체국</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">예금주명</label>
+                  <input class="form-input" id="sf-account-holder" placeholder="예금주 이름">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">계좌번호</label>
+                <input class="form-input" id="sf-account-number" placeholder="계좌번호 입력 (- 없이)" oninput="this.value=this.value.replace(/\D/g,'')">
+              </div>
+            </div>
+
+            <!-- 네비게이션 버튼 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+              <button class="btn btn-secondary" id="sf-btn-prev" onclick="staffStepPrev()" style="display:none">← 이전</button>
+              <button class="btn btn-secondary" onclick="closeStaffForm()">✕ 취소</button>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" id="sf-btn-next" onclick="staffStepNext()">다음 →</button>
+                <button class="btn btn-primary" id="sf-btn-save" onclick="saveStaff()" style="display:none">💾 저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="staff-empty" style="display:none">
+        <div class="empty-state"><div class="empty-icon">👔</div><div class="empty-text">등록된 직원이 없습니다.</div></div>
       </div>
     </div>
 
@@ -2887,7 +3437,8 @@ window.cmsLogout=function(){
     // update topbar title
     const titles = {
       dashboard: '현황 대시보드',
-      dogeup: '도급관리',
+      dogeup: '프로젝트 관리',
+      staff: '정규직 관리',
       silhaeng: '실행관리',
       materials: '자재관리',
       labor: '노무관리',
@@ -2899,6 +3450,13 @@ window.cmsLogout=function(){
     document.getElementById('topbar-title').textContent = titles[pageId] || pageId;
     if(pageId === 'expense' && typeof expRender === 'function') expRender();
     if(pageId === 'meal' && typeof mealInit === 'function') mealInit();
+    if(pageId === 'dogeup') {
+      currentProjectId = null;
+      document.getElementById('pj-list-view').style.display = '';
+      document.getElementById('pj-detail-view').style.display = 'none';
+      renderProjectList();
+    }
+    if(pageId === 'staff') { renderStaffList(); }
   }
 
   function switchTab(el, containerId, targetId) {
@@ -3760,7 +4318,7 @@ window.cmsLogout=function(){
       fetch('./백업.json')
         .then(r => r.json())
         .then(data => {
-          const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_meals'];
+          const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_meals'];
           KEYS.forEach(k => { if (data[k]) localStorage.setItem(k, JSON.stringify(data[k])); });
           showToast('✅ 데이터 자동 로드 완료! 새로고침합니다...', 'success');
           setTimeout(() => location.reload(), 1500);
@@ -5044,6 +5602,10 @@ window.cmsLogout=function(){
   }
 
     function searchAddress() {
+    if (typeof daum === 'undefined' || !daum.Postcode) {
+      showToast('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.', 'error');
+      return;
+    }
     new daum.Postcode({
       oncomplete: function(data) {
         // 도로명 우선, 없으면 지번
@@ -6592,6 +7154,1125 @@ window.cmsLogout=function(){
 
 
 
+  /* ===== 프로젝트 목록 관리 ===== */
+  let currentProjectId = null;
+
+  function getCurrentUser() {
+    try { var d = JSON.parse(sessionStorage.getItem('cms_login') || '{}'); return d.id || ''; } catch(e) { return ''; }
+  }
+
+  function getProjectList() {
+    return JSON.parse(localStorage.getItem('cm_projects') || '[]');
+  }
+  function saveProjectList(list) {
+    localStorage.setItem('cm_projects', JSON.stringify(list));
+  }
+
+  function renderProjectList() {
+    var list = getProjectList();
+    var tbody = document.getElementById('pj-list-tbody');
+    var empty = document.getElementById('pj-list-empty');
+    var addBtn = document.getElementById('pj-add-btn-wrap');
+    var countEl = document.getElementById('pj-list-count');
+    var delTh = document.getElementById('pj-del-th');
+    if (!tbody) return;
+
+    var isAdmin = getCurrentUser() === 'hq' || getCurrentUser() === 'admin';
+    if (addBtn) addBtn.style.display = isAdmin ? '' : 'none';
+    if (delTh) delTh.style.display = isAdmin ? '' : 'none';
+
+    var keyword = (document.getElementById('pj-search')?.value || '').trim().toLowerCase();
+    var filtered = keyword ? list.filter(function(pj) {
+      var data = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
+      var contractor = (data['pj-contractor'] || '').toLowerCase();
+      return (pj.name || '').toLowerCase().indexOf(keyword) >= 0 || contractor.indexOf(keyword) >= 0;
+    }) : list;
+
+    if (countEl) countEl.textContent = '총 ' + filtered.length + '건' + (keyword ? ' (전체 ' + list.length + '건)' : '');
+
+    if (!list.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">검색 결과가 없습니다.</td></tr>';
+      return;
+    }
+
+    var today = new Date();
+    var fmtAmt = function(v) { return v > 0 ? Math.round(v / 100000000).toLocaleString() + '억' : '-'; };
+
+    tbody.innerHTML = filtered.map(function(pj, i) {
+      var data = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
+      var pivot = data.pivotData || {columns:[], cells:{}};
+      var total = 0;
+      pivot.columns.forEach(function(_, ci) {
+        PJ_INPUT_KEYS.forEach(function(k) { total += (pivot.cells[k + '_' + ci] || 0); });
+      });
+      var contractor = data['pj-contractor'] || '-';
+      var manager = data['pj-site-manager'] || '-';
+      var admin = data['pj-site-admin'] || '-';
+      var startD = data['pj-start-date'] || '';
+      var endD = data['pj-end-date'] || '';
+      var remainText = '-', remainColor = 'var(--text3)';
+      if (endD) {
+        var diff = Math.ceil((new Date(endD) - today) / 86400000);
+        remainText = diff >= 0 ? 'D-' + diff : 'D+' + Math.abs(diff);
+        remainColor = diff < 0 ? 'var(--danger)' : diff < 90 ? '#e67e22' : 'var(--accent)';
+      }
+      var delBtn = isAdmin ? '<td style="text-align:center"><button onclick="event.stopPropagation();deleteProject(\'' + pj.id + '\')" style="border:none;background:none;color:var(--danger);cursor:pointer;font-size:11px">삭제</button></td>' : '';
+
+      return '<tr onclick="openProjectDetail(\'' + pj.id + '\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'
+        + '<td style="text-align:center;color:var(--text3);font-size:11px">' + (i + 1) + '</td>'
+        + '<td style="font-size:12px;color:var(--text2)">' + contractor + '</td>'
+        + '<td style="font-weight:600;font-size:13px">' + (pj.name || '(이름 없음)') + '</td>'
+        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + manager + '</td>'
+        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + admin + '</td>'
+        + '<td style="text-align:right;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums">' + fmtAmt(total) + '</td>'
+        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + (startD || '-') + '</td>'
+        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + (endD || '-') + '</td>'
+        + '<td style="text-align:center;font-weight:700;color:' + remainColor + ';font-size:12px">' + remainText + '</td>'
+        + delBtn
+        + '</tr>';
+    }).join('');
+  }
+
+
+
+  function openAddProjectModal() {
+    document.getElementById('pj-add-modal')?.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'pj-add-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'
+      + '<div style="font-size:16px;font-weight:800;margin-bottom:16px">🏗 현장 추가</div>'
+      + '<div style="margin-bottom:14px"><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">공사명 (프로젝트명)</label>'
+      + '<input id="pj-new-name" class="form-input" placeholder="예: ○○ 복합개발 전기공사 1공구" style="width:100%;padding:8px;font-size:13px"></div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end">'
+      + '<button onclick="document.getElementById(\'pj-add-modal\').remove()" style="padding:8px 18px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
+      + '<button onclick="confirmAddProject()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">추가</button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+    setTimeout(function(){ document.getElementById('pj-new-name')?.focus(); }, 100);
+  }
+
+  function confirmAddProject() {
+    var name = document.getElementById('pj-new-name')?.value?.trim();
+    if (!name) { showToast('공사명을 입력해주세요', 'error'); return; }
+    var id = 'pj_' + Date.now();
+    var list = getProjectList();
+    list.push({ id: id, name: name });
+    saveProjectList(list);
+    // 초기 데이터
+    localStorage.setItem('cm_project_' + id, JSON.stringify({ 'pj-name': name }));
+    document.getElementById('pj-add-modal').remove();
+    renderProjectList();
+    showToast('✅ ' + name + ' 현장이 추가되었습니다!', 'success');
+  }
+
+  function deleteProject(id) {
+    document.getElementById('pj-del-pj-modal')?.remove();
+    var list = getProjectList();
+    var pj = list.find(function(p){ return p.id === id; });
+    var overlay = document.createElement('div');
+    overlay.id = 'pj-del-pj-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:12px">🗑 현장 삭제</div>'
+      + '<div style="font-size:13px;color:#6b7280;margin-bottom:18px"><b>' + (pj?.name||'') + '</b> 현장을 삭제하시겠습니까?<br>모든 데이터가 삭제됩니다.</div>'
+      + '<div style="display:flex;gap:8px;justify-content:center">'
+      + '<button onclick="document.getElementById(\'pj-del-pj-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
+      + '<button onclick="confirmDeleteProject(\'' + id + '\')" style="padding:8px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:700;cursor:pointer">삭제</button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+  }
+
+  function confirmDeleteProject(id) {
+    document.getElementById('pj-del-pj-modal')?.remove();
+    var list = getProjectList().filter(function(p){ return p.id !== id; });
+    saveProjectList(list);
+    localStorage.removeItem('cm_project_' + id);
+    renderProjectList();
+    showToast('🗑 현장이 삭제되었습니다.', 'success');
+  }
+
+  function openProjectDetail(id) {
+    currentProjectId = id;
+    document.getElementById('pj-list-view').style.display = 'none';
+    document.getElementById('pj-detail-view').style.display = '';
+
+    var list = getProjectList();
+    var pj = list.find(function(p){ return p.id === id; });
+    var titleEl = document.getElementById('pj-detail-title');
+    var subEl = document.getElementById('pj-detail-subtitle');
+    if (titleEl) titleEl.textContent = pj?.name || '프로젝트 상세';
+    if (subEl) subEl.textContent = '프로젝트 개요 및 도급·기성 현황';
+
+    loadProjectInfoById(id);
+  }
+
+  function backToProjectList() {
+    currentProjectId = null;
+    document.getElementById('pj-detail-view').style.display = 'none';
+    document.getElementById('pj-list-view').style.display = '';
+    renderProjectList();
+  }
+
+  // 프로젝트별 로드/저장
+  function loadProjectInfoById(id) {
+    var saved = JSON.parse(localStorage.getItem('cm_project_' + id) || '{}');
+    PJ_FIELDS.forEach(function(fid) {
+      var el = document.getElementById(fid);
+      if (el && saved[fid] !== undefined) el.value = saved[fid];
+      else if (el) el.value = '';
+    });
+    calcPjRemainDays();
+    var org = saved.org || DEFAULT_ORG;
+    renderOrgTable(org);
+    if (saved.pivotData) {
+      pjPivotData = JSON.parse(JSON.stringify(saved.pivotData));
+    } else {
+      pjPivotData = { columns: [], cells: {} };
+    }
+    renderPjPivot();
+  }
+
+  /* ===== 정규직 관리 ===== */
+  function getStaffList() { return JSON.parse(localStorage.getItem('cm_staff') || '[]'); }
+  function saveStaffList(list) { localStorage.setItem('cm_staff', JSON.stringify(list)); }
+
+  var staffEditIdx = -1;
+  var sfCurrentStep = 1;
+
+  var SF_TEAM_HQ = ['감사실','안전보건실','경영지원실','재무회계팀','외주구매팀','업무팀','공사관리팀','예산견적팀','영업/PM 1팀','영업/PM 2팀','영업/PM 3팀','영업/PM 4팀','영업/PM 5팀','영업/PM 플랜트팀'];
+  var SF_JOB_SITE = [];  // 노무관리 직종과 동일 - 나중에 세부항목 변경 예정
+  var SF_RANK_HQ = ['대표이사','부사장','전무','상무','이사','부장','차장','과장','대리','사원'];
+
+  function onStaffTypeChange(type) {
+    var isHQ = type === '본사';
+    document.getElementById('sf-type-hq').checked = isHQ;
+    document.getElementById('sf-type-site').checked = !isHQ;
+    document.getElementById('sf-type-label-hq').style.borderColor = isHQ ? 'var(--accent)' : 'var(--border)';
+    document.getElementById('sf-type-label-hq').style.background = isHQ ? '#f0fdf4' : '';
+    document.getElementById('sf-type-label-site').style.borderColor = !isHQ ? 'var(--accent)' : 'var(--border)';
+    document.getElementById('sf-type-label-site').style.background = !isHQ ? '#f0fdf4' : '';
+
+    var jobSel = document.getElementById('sf-job');
+    var rankGroup = document.getElementById('sf-rank-group');
+    var rankSel = document.getElementById('sf-rank');
+    var jobLabel = document.getElementById('sf-job-label');
+
+    if (isHQ) {
+      // 본사: 직종→팀명, 직급 표시
+      jobLabel.textContent = '팀명';
+      jobSel.innerHTML = '<option value="">-- 팀명 선택 --</option>' + SF_TEAM_HQ.map(function(t){return '<option>'+t+'</option>';}).join('');
+      rankGroup.style.display = '';
+      rankSel.innerHTML = '<option value="">-- 직급 선택 --</option>' + SF_RANK_HQ.map(function(r){return '<option>'+r+'</option>';}).join('');
+    } else {
+      // 현장: 직종, 직급 숨김
+      jobLabel.textContent = '직종';
+      jobSel.innerHTML = '<option value="">-- 직종 선택 --</option>'
+        + '<option style="font-weight:900">소장</option>'
+        + '<optgroup label="공무"><option>공무 부장</option><option>공무 과장</option><option>공무 차장</option><option>공무 대리</option><option>공무 주임</option></optgroup>'
+        + '<option style="font-weight:900">안전관리자</option>'
+        + '<option style="font-weight:900">전기기술자</option>'
+        + '<option style="font-weight:900">통신기술자</option>'
+        + '<option style="font-weight:900">소방기술자</option>';
+      rankGroup.style.display = 'none';
+      rankSel.value = '';
+    }
+    calcStaffPay();
+    // 자가운전: 현장=고정 35만, 본사=수동입력
+    document.getElementById('sf-car-fixed').style.display = isHQ ? 'none' : '';
+    document.getElementById('sf-car-input').style.display = isHQ ? '' : 'none';
+    document.getElementById('sf-car-note').textContent = isHQ ? '지급 시 금액 입력 (미지급 시 0)' : '고정 35만원';
+    if (!isHQ) document.getElementById('sf-car-input').value = '';
+    // 식대: 현장만
+    document.getElementById('sf-meal-group').style.display = isHQ ? 'none' : '';
+  }
+
+  function searchStaffAddress() {
+    if (typeof daum === 'undefined' || !daum.Postcode) {
+      showToast('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.', 'error');
+      return;
+    }
+    new daum.Postcode({
+      oncomplete: function(data) {
+        var addr = data.roadAddress || data.jibunAddress;
+        document.getElementById('sf-zipcode').value = data.zonecode;
+        document.getElementById('sf-address').value = addr;
+        document.getElementById('sf-address-detail').focus();
+      },
+      width: '100%',
+      height: '100%',
+    }).open();
+  }
+
+  function toggleStaffForeignFields() {
+    var isForeign = document.getElementById('sf-nationality').value === 'foreign';
+    document.getElementById('sf-stay-code-group').style.display = isForeign ? '' : 'none';
+  }
+
+  // ── 급여 자동계산 ──
+  var SF_CAR = 350000, SF_MEAL = 200000, SF_FUNERAL = 25000;
+
+  // 간이세액표 (간략화 - 과세표준 기준 월 소득세 근사치)
+  function getSimpleTax(taxableMonthly, dependents) {
+    // 근사 간이세액 (2025 기준 간략 테이블)
+    var t = taxableMonthly;
+    var d = Math.min(Math.max(dependents || 1, 1), 7);
+    if (t <= 1060000) return 0;
+    // 기본 세율 근사
+    var base = 0;
+    if (t <= 1500000) base = (t - 1060000) * 0.06;
+    else if (t <= 3000000) base = 26400 + (t - 1500000) * 0.15;
+    else if (t <= 4500000) base = 251400 + (t - 3000000) * 0.15;
+    else if (t <= 8000000) base = 476400 + (t - 4500000) * 0.24;
+    else base = 1316400 + (t - 8000000) * 0.35;
+    // 부양가족 공제 (1인당 약 12,500원 감면 근사)
+    var deduction = (d - 1) * 12500;
+    return Math.max(Math.round((base - deduction) / 10) * 10, 0);
+  }
+
+  function calcStaffPay() {
+    var wageRaw = (document.getElementById('sf-wage')?.value || '0').replace(/[^\d]/g, '');
+    var basicPay = Number(wageRaw) || 0;
+    var spouse = document.getElementById('sf-spouse')?.value === 'Y';
+    var children = Number(document.getElementById('sf-children')?.value || 0);
+    var dependents = Number(document.getElementById('sf-dependents')?.value || 1);
+    var typeEl = document.querySelector('input[name="sf-type"]:checked');
+    var isHQ = typeEl && typeEl.value === '본사';
+    var isSite = typeEl && typeEl.value === '현장';
+
+    // 자가운전: 현장=고정35만, 본사=수동입력
+    var carPay = 0;
+    if (isSite) {
+      carPay = SF_CAR;
+    } else {
+      var carRaw = (document.getElementById('sf-car-input')?.value || '0').replace(/[^\d]/g, '');
+      carPay = Number(carRaw) || 0;
+    }
+    // 식대: 현장만 20만
+    var mealPay = isSite ? SF_MEAL : 0;
+
+    // 수당 계산 (직접 입력 금액 기반)
+    var familyAmtRaw = (document.getElementById('sf-family-amt')?.value || '0').replace(/[^\d]/g, '');
+    var childAmtRaw = (document.getElementById('sf-child-amt')?.value || '0').replace(/[^\d]/g, '');
+    var familyAllow = spouse ? (Number(familyAmtRaw) || 0) : 0;
+    var childAllow = children * (Number(childAmtRaw) || 0);
+    var totalAllow = familyAllow + childAllow;
+    document.getElementById('sf-allow-display').textContent = totalAllow.toLocaleString();
+    var allowLabel = document.getElementById('sf-allow-label');
+    if (allowLabel) allowLabel.textContent = isHQ ? '보육수당 / 가족수당' : '가족수당 / 자녀수당';
+    // 본사: 자녀수당→보육수당 라벨
+    var childAmtLabel = document.getElementById('sf-child-amt-label');
+    if (childAmtLabel) childAmtLabel.textContent = isHQ ? '보육수당 (1인당)' : '자녀수당 (1인당)';
+    var childAmtNote = document.getElementById('sf-child-amt-note');
+    if (childAmtNote) childAmtNote.textContent = isHQ ? '자녀 1인당 보육수당' : '자녀 1인당 지급 금액';
+
+    // 총 지급액
+    var grossPay = basicPay + carPay + mealPay + totalAllow;
+    document.getElementById('sf-pay-total').textContent = grossPay.toLocaleString() + '원';
+
+    // 과세 표준 (식대 비과세 제외)
+    var taxable = grossPay - mealPay;
+
+    // 4대보험 (과세소득 기준)
+    var pension = Math.round(taxable * 0.045);
+    var health = Math.round(taxable * 0.03545);
+    var longcare = Math.round(health * 0.1281);
+    var employ = Math.round(taxable * 0.009);
+
+    // 소득세
+    var incomeTax = getSimpleTax(taxable, dependents);
+    var localTax = Math.round(incomeTax * 0.1);
+
+    // 상조회비
+    var funeralYn = document.getElementById('sf-funeral-yn')?.value === 'Y';
+    var funeralAmt = funeralYn ? SF_FUNERAL : 0;
+
+    // 표시
+    document.getElementById('sf-ded-pension').textContent = pension.toLocaleString();
+    document.getElementById('sf-ded-health').textContent = health.toLocaleString();
+    document.getElementById('sf-ded-longcare').textContent = longcare.toLocaleString();
+    document.getElementById('sf-ded-employ').textContent = employ.toLocaleString();
+    document.getElementById('sf-ded-incometax').textContent = incomeTax.toLocaleString();
+    document.getElementById('sf-ded-localtax').textContent = localTax.toLocaleString();
+    document.getElementById('sf-ded-funeral').textContent = funeralAmt.toLocaleString();
+
+    var totalDed = pension + health + longcare + employ + incomeTax + localTax + funeralAmt;
+    document.getElementById('sf-ded-total').textContent = totalDed.toLocaleString() + '원';
+
+    // 실수령액
+    var netPay = grossPay - totalDed;
+    document.getElementById('sf-net-pay').textContent = netPay.toLocaleString() + '원';
+
+    // 퇴직금
+    var retireBase = isSite ? (basicPay + SF_CAR) : basicPay;
+    var retireFund = Math.round(retireBase / 12);
+    document.getElementById('sf-retire-fund').textContent = retireFund.toLocaleString() + '원';
+    var retireNote = document.getElementById('sf-retire-note');
+    if (retireNote) {
+      retireNote.textContent = isSite ? '(기본급+자가운전35만)/12 · 현장원가 노무비 반영' : '기본급/12 · 현장원가 미반영';
+    }
+  }
+
+  function switchStaffStep(n) {
+    sfCurrentStep = n;
+    for (var i = 1; i <= 3; i++) {
+      var el = document.getElementById('sf-step-' + i);
+      if (el) el.style.display = i === n ? '' : 'none';
+      var node = document.getElementById('sf-snode-' + i);
+      if (node) { node.className = i <= n ? 'step-node active' : 'step-node'; }
+      var line = document.getElementById('sf-sline-' + i);
+      if (line) { line.style.background = i < n ? 'var(--accent)' : 'var(--border)'; }
+    }
+    document.getElementById('sf-btn-prev').style.display = n > 1 ? '' : 'none';
+    document.getElementById('sf-btn-next').style.display = n < 3 ? '' : 'none';
+    document.getElementById('sf-btn-save').style.display = n === 3 ? '' : 'none';
+  }
+
+  function staffStepNext() {
+    if (sfCurrentStep === 1) {
+      var typeEl = document.querySelector('input[name="sf-type"]:checked');
+      if (!typeEl) { showToast('구분(본사/현장)을 선택해주세요', 'error'); return; }
+      if (!document.getElementById('sf-name').value.trim()) { showToast('이름을 입력해주세요', 'error'); return; }
+    }
+    if (sfCurrentStep < 3) switchStaffStep(sfCurrentStep + 1);
+  }
+  function staffStepPrev() { if (sfCurrentStep > 1) switchStaffStep(sfCurrentStep - 1); }
+
+  function openStaffForm(editIdx) {
+    staffEditIdx = editIdx !== undefined ? editIdx : -1;
+    var panel = document.getElementById('staff-form-panel');
+    panel.style.display = '';
+    document.getElementById('staff-form-title').textContent = staffEditIdx >= 0 ? '직원 수정' : '직원 등록';
+    // 초기화
+    ['sf-name','sf-phone','sf-team','sf-note','sf-wage','sf-family-amt','sf-child-amt','sf-id-front','sf-id-back','sf-zipcode','sf-address','sf-address-detail','sf-account-holder','sf-account-number'].forEach(function(id){
+      var el = document.getElementById(id); if(el) el.value = '';
+    });
+    ['sf-job','sf-rank','sf-nationality','sf-stay-code','sf-bank','sf-spouse','sf-children','sf-dependents','sf-funeral-yn'].forEach(function(id){
+      var el = document.getElementById(id); if(el) el.selectedIndex = 0;
+    });
+    document.getElementById('sf-join-date').value = '';
+    document.getElementById('sf-leave-date').value = '';
+    document.getElementById('sf-type-hq').checked = false;
+    document.getElementById('sf-type-site').checked = false;
+    document.getElementById('sf-type-label-hq').style.borderColor = 'var(--border)';
+    document.getElementById('sf-type-label-hq').style.background = '';
+    document.getElementById('sf-type-label-site').style.borderColor = 'var(--border)';
+    document.getElementById('sf-type-label-site').style.background = '';
+    document.getElementById('sf-rank-group').style.display = 'none';
+    document.getElementById('sf-job-label').textContent = '직종';
+    document.getElementById('sf-stay-code-group').style.display = 'none';
+
+    if (staffEditIdx >= 0) {
+      var s = getStaffList()[staffEditIdx];
+      if (s) {
+        if (s.type) onStaffTypeChange(s.type);
+        document.getElementById('sf-name').value = s.name || '';
+        document.getElementById('sf-phone').value = s.phone || '';
+        // 본사: sf-job=team, 현장: sf-job=job
+        if (s.type === '본사') {
+          document.getElementById('sf-job').value = s.team || '';
+        } else {
+          document.getElementById('sf-job').value = s.job || '';
+        }
+        document.getElementById('sf-rank').value = s.rank || '';
+        document.getElementById('sf-wage').value = s.wage ? Number(s.wage).toLocaleString() : '';
+        if (s.type === '본사' && s.carPay) {
+          document.getElementById('sf-car-input').value = Number(s.carPay).toLocaleString();
+        }
+        document.getElementById('sf-spouse').value = s.spouse || 'N';
+        document.getElementById('sf-children').value = s.children || '0';
+        document.getElementById('sf-dependents').value = s.dependents || '1';
+        document.getElementById('sf-family-amt').value = s.familyAmt ? Number(s.familyAmt).toLocaleString() : '';
+        document.getElementById('sf-child-amt').value = s.childAmt ? Number(s.childAmt).toLocaleString() : '';
+        document.getElementById('sf-funeral-yn').value = s.funeralYn || 'Y';
+        document.getElementById('sf-join-date').value = s.joinDate || '';
+        document.getElementById('sf-leave-date').value = s.leaveDate || '';
+        document.getElementById('sf-note').value = s.note || '';
+        document.getElementById('sf-nationality').value = s.nationality || 'domestic';
+        toggleStaffForeignFields();
+        document.getElementById('sf-stay-code').value = s.stayCode || '';
+        document.getElementById('sf-id-front').value = s.idFront || '';
+        document.getElementById('sf-id-back').value = s.idBack || '';
+        document.getElementById('sf-zipcode').value = s.zipcode || '';
+        document.getElementById('sf-address').value = s.address || '';
+        document.getElementById('sf-address-detail').value = s.addressDetail || '';
+        document.getElementById('sf-bank').value = s.bank || '';
+        document.getElementById('sf-account-holder').value = s.accountHolder || '';
+        document.getElementById('sf-account-number').value = s.accountNumber || '';
+      }
+    }
+    switchStaffStep(1);
+    panel.scrollIntoView({behavior:'smooth'});
+  }
+
+  function closeStaffForm() {
+    document.getElementById('staff-form-panel').style.display = 'none';
+    staffEditIdx = -1;
+  }
+
+  function saveStaff() {
+    var typeEl = document.querySelector('input[name="sf-type"]:checked');
+    if (!typeEl) { switchStaffStep(1); showToast('구분을 선택해주세요', 'error'); return; }
+    var name = document.getElementById('sf-name').value.trim();
+    if (!name) { switchStaffStep(1); showToast('이름을 입력해주세요', 'error'); return; }
+
+    var staffType = typeEl.value;
+    var jobVal = document.getElementById('sf-job').value;
+    var obj = {
+      type: staffType,
+      name: name,
+      phone: document.getElementById('sf-phone').value.trim(),
+      team: staffType === '본사' ? jobVal : '',
+      job: staffType === '현장' ? jobVal : '',
+      rank: staffType === '본사' ? document.getElementById('sf-rank').value : '',
+      wage: document.getElementById('sf-wage').value.replace(/[^\d]/g,''),
+      carPay: staffType === '본사' ? (document.getElementById('sf-car-input').value.replace(/[^\d]/g,'') || '0') : '350000',
+      spouse: document.getElementById('sf-spouse').value,
+      children: document.getElementById('sf-children').value,
+      dependents: document.getElementById('sf-dependents').value,
+      familyAmt: document.getElementById('sf-family-amt').value.replace(/[^\d]/g,''),
+      childAmt: document.getElementById('sf-child-amt').value.replace(/[^\d]/g,''),
+      funeralYn: document.getElementById('sf-funeral-yn').value,
+      joinDate: document.getElementById('sf-join-date').value,
+      leaveDate: document.getElementById('sf-leave-date').value,
+      note: document.getElementById('sf-note').value.trim(),
+      nationality: document.getElementById('sf-nationality').value,
+      stayCode: document.getElementById('sf-stay-code').value,
+      idFront: document.getElementById('sf-id-front').value,
+      idBack: document.getElementById('sf-id-back').value,
+      zipcode: document.getElementById('sf-zipcode').value.trim(),
+      address: document.getElementById('sf-address').value.trim(),
+      addressDetail: document.getElementById('sf-address-detail').value.trim(),
+      bank: document.getElementById('sf-bank').value,
+      accountHolder: document.getElementById('sf-account-holder').value.trim(),
+      accountNumber: document.getElementById('sf-account-number').value.trim(),
+      status: document.getElementById('sf-leave-date').value ? '퇴직' : '재직'
+    };
+
+    var list = getStaffList();
+    if (staffEditIdx >= 0) { list[staffEditIdx] = obj; } else { list.push(obj); }
+    saveStaffList(list);
+    closeStaffForm();
+    renderStaffList();
+    showToast('✅ ' + name + (staffEditIdx >= 0 ? ' 수정' : ' 등록') + ' 완료', 'success');
+  }
+
+  function renderStaffList() {
+    var list = getStaffList();
+    var tbody = document.getElementById('staff-tbody');
+    var empty = document.getElementById('staff-empty');
+    if (!tbody) return;
+
+    var keyword = (document.getElementById('staff-search')?.value || '').trim().toLowerCase();
+    var typeFilter = document.getElementById('staff-filter-type')?.value || '';
+    var statusFilter = document.getElementById('staff-filter-status')?.value || '';
+
+    var filtered = list.filter(function(s) {
+      if (typeFilter && s.type !== typeFilter) return false;
+      if (statusFilter && s.status !== statusFilter) return false;
+      if (keyword && (s.name||'').toLowerCase().indexOf(keyword) < 0
+        && (s.job||'').toLowerCase().indexOf(keyword) < 0
+        && (s.team||'').toLowerCase().indexOf(keyword) < 0) return false;
+      return true;
+    });
+
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 직원이 없습니다.<br><span style="font-size:12px">직원을 등록해 주세요.</span></td></tr>';
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--text3)">검색 결과가 없습니다.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(function(s, idx) {
+      var realIdx = list.indexOf(s);
+      var typeBadge = s.type === '본사' ? '<span class="badge badge-blue">본사</span>' : '<span class="badge badge-green">현장</span>';
+      var statusBadge = s.status === '재직' ? '<span class="badge badge-green">재직</span>'
+        : s.status === '휴직' ? '<span class="badge badge-yellow">휴직</span>'
+        : '<span class="badge badge-red">퇴직</span>';
+      var jobTeam = s.type === '본사' ? (s.team || '-') : (s.job || '-');
+      var rankVal = s.type === '본사' ? (s.rank || '-') : '-';
+      var teamSite = s.type === '본사' ? (s.team || '-') : '-';
+      return '<tr>'
+        + '<td style="text-align:center">' + typeBadge + '</td>'
+        + '<td style="font-weight:600">' + (s.name||'-') + '</td>'
+        + '<td style="font-size:12px">' + jobTeam + '</td>'
+        + '<td style="font-size:12px">' + rankVal + '</td>'
+        + '<td style="font-size:12px">' + teamSite + '</td>'
+        + '<td style="font-size:12px">' + (s.phone||'-') + '</td>'
+        + '<td style="font-size:12px">' + (s.joinDate||'-') + '</td>'
+        + '<td style="text-align:center">' + statusBadge + '</td>'
+        + '<td style="text-align:center"><button onclick="openStaffForm('+realIdx+')" style="border:none;background:none;cursor:pointer;font-size:11px;color:var(--accent)">수정</button> <button onclick="deleteStaff('+realIdx+')" style="border:none;background:none;cursor:pointer;font-size:11px;color:var(--danger)">삭제</button></td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function deleteStaff(idx) {
+    var list = getStaffList();
+    var name = list[idx]?.name || '';
+    document.getElementById('staff-del-modal')?.remove();
+    var ov = document.createElement('div');
+    ov.id = 'staff-del-modal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+    ov.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:320px;width:90%;text-align:center">'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:12px">🗑 직원 삭제</div>'
+      + '<div style="font-size:13px;color:#6b7280;margin-bottom:18px"><b>' + name + '</b>을(를) 삭제하시겠습니까?</div>'
+      + '<div style="display:flex;gap:8px;justify-content:center">'
+      + '<button onclick="document.getElementById(\'staff-del-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
+      + '<button onclick="confirmDeleteStaff('+idx+')" style="padding:8px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:700;cursor:pointer">삭제</button>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+  }
+
+  function confirmDeleteStaff(idx) {
+    document.getElementById('staff-del-modal')?.remove();
+    var list = getStaffList();
+    var name = list[idx]?.name || '';
+    list.splice(idx, 1);
+    saveStaffList(list);
+    renderStaffList();
+    showToast('🗑 ' + name + ' 삭제 완료', 'success');
+  }
+
+
+  /* ===== 프로젝트 개요 ===== */
+  const PJ_FIELDS = ['pj-name','pj-site-name','pj-usage','pj-address','pj-start-date','pj-end-date',
+    'pj-owner','pj-contractor','pj-owner-contact','pj-contractor-contact',
+    'pj-site-manager','pj-site-admin',
+    'pj-labor-ratio',
+    'pj-gongjong','pj-dong-count','pj-underground','pj-above-ground','pj-unit-count','pj-area','pj-building-note'];
+
+  const DEFAULT_ORG = [
+    {title:'현장소장', name:'', phone:'', note:''},
+    {title:'공무', name:'', phone:'', note:''},
+    {title:'공사', name:'', phone:'', note:''},
+    {title:'안전관리자', name:'', phone:'', note:''},
+    {title:'품질관리자', name:'', phone:'', note:''}
+  ];
+
+  function loadProjectInfo() {
+    // 프로젝트 목록만 렌더 (상세는 openProjectDetail에서)
+    renderProjectList();
+  }
+
+  function saveProjectInfo() {
+    if (!currentProjectId) { showToast('프로젝트를 선택해주세요', 'error'); return; }
+    const data = {};
+    PJ_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    });
+    // 조직도 수집
+    data.org = [];
+    document.querySelectorAll('#pj-org-tbody tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      if (inputs.length >= 3) {
+        data.org.push({ title: inputs[0].value, name: inputs[1].value, phone: inputs[2].value, note: inputs[3]?.value || '' });
+      }
+    });
+    // 계약 피벗 데이터 저장
+    data.pivotData = JSON.parse(JSON.stringify(pjPivotData));
+    localStorage.setItem('cm_project_' + currentProjectId, JSON.stringify(data));
+
+    // 프로젝트 목록 이름 동기화
+    var list = getProjectList();
+    var pj = list.find(function(p){ return p.id === currentProjectId; });
+    if (pj && data['pj-name']) { pj.name = data['pj-name']; saveProjectList(list); }
+
+    // 상세 타이틀 갱신
+    var titleEl = document.getElementById('pj-detail-title');
+    if (titleEl && data['pj-name']) titleEl.textContent = data['pj-name'];
+
+    // 도급현황 탭도 즉시 갱신
+    renderDogupView();
+    showToast('✅ 프로젝트 정보가 저장되었습니다!', 'success');
+  }
+
+  function fmtPjAmt(el) {
+    let v = el.value.replace(/[^\d]/g, '');
+    if (v) el.value = Number(v).toLocaleString();
+    else el.value = '';
+  }
+
+  // 계약 구분 목록
+  const PJ_CT_TYPES = ['당초계약','설계변경 1차','설계변경 2차','설계변경 3차','설계변경 4차','설계변경 5차','설계변경 6차','설계변경 7차','설계변경 8차','ESC','계약 외 공사','추가공사','공기변경','정산계약'];
+  const PJ_COST_ROWS = [
+    {key:'material', label:'재료비', group:'direct'},
+    {key:'labor', label:'노무비/경비', group:'direct'},
+    {key:'_direct_sub', label:'소계', group:'direct_sub'},
+    {key:'ind_injury', label:'산재 보험료', group:'indirect'},
+    {key:'ind_employ', label:'고용 보험료', group:'indirect'},
+    {key:'ind_health', label:'건강 보험료', group:'indirect'},
+    {key:'ind_longcare', label:'노인장기요양 보험료', group:'indirect'},
+    {key:'ind_pension', label:'국민연금 보험료', group:'indirect'},
+    {key:'ind_safety', label:'산업안전보건관리비', group:'indirect'},
+    {key:'ind_retire', label:'퇴직공제부금비', group:'indirect'},
+    {key:'ind_equip', label:'건설기계대여보증', group:'indirect'},
+    {key:'ind_misc', label:'공과잡비', group:'indirect'},
+    {key:'_indirect_sub', label:'소계', group:'indirect_sub'},
+    {key:'purchase_tax', label:'매입세액', group:'tax'},
+    {key:'vat', label:'부가세액', group:'tax'}
+  ];
+  const PJ_COST_LABELS = {};
+  PJ_COST_ROWS.forEach(r => { if(!r.key.startsWith('_')) PJ_COST_LABELS[r.key] = r.label; });
+  const PJ_INPUT_KEYS = PJ_COST_ROWS.filter(r => !r.key.startsWith('_')).map(r => r.key);
+  const PJ_DIRECT_KEYS = PJ_COST_ROWS.filter(r => r.group === 'direct').map(r => r.key);
+  const PJ_INDIRECT_KEYS = PJ_COST_ROWS.filter(r => r.group === 'indirect').map(r => r.key);
+
+  // pivotData: { columns: [{type:'당초계약', date:'25.07'}, ...], cells: {'material_0': 123, ...} }
+  let pjPivotData = { columns: [], cells: {} };
+
+  function loadPjPivot() {
+    var key = currentProjectId ? 'cm_project_' + currentProjectId : 'cm_project_info';
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    if (saved.pivotData) {
+      pjPivotData = JSON.parse(JSON.stringify(saved.pivotData));
+    } else {
+      pjPivotData = { columns: [], cells: {} };
+    }
+    renderPjPivot();
+  }
+
+  function renderPjPivot() {
+    const thead = document.getElementById('pj-pivot-thead');
+    const tbody = document.getElementById('pj-pivot-tbody');
+    const tfoot = document.getElementById('pj-pivot-tfoot');
+    if (!thead || !tbody || !tfoot) return;
+
+    const cols = pjPivotData.columns;
+    const cells = pjPivotData.cells;
+    const fmt = v => v ? Number(v).toLocaleString() : '';
+    const fmtD = v => v > 0 ? v.toLocaleString() : '-';
+    const hasInitial = cols.length > 0 && cols[0].type === '당초계약';
+    const sumKeys = (keys, ci) => keys.reduce((s, k) => s + (cells[k + '_' + ci] || 0), 0);
+
+    // 색상
+    const cDirect = '#e8f5e9';   // 직접공사비 연녹
+    const cDSub   = '#c8e6c9';   // 직접 소계
+    const cIndirect = '#fff8e1'; // 간접공사비 연노랑
+    const cISub   = '#ffecb3';   // 간접 소계
+    const cFinal  = '#fffde7';   // 최종금액
+    const cTotal  = '#ffff00';   // 총 공사금액
+    const bd = 'border-bottom:1px solid #e0e0e0';
+    const bdR = 'border-right:1px solid #e0e0e0';
+
+    // ── thead ──
+    let th = '<tr style="background:#f5f5f5">';
+    th += '<th colspan="2" style="padding:7px 6px;'+bd+';'+bdR+';text-align:center;font-weight:700;font-size:12px">구 분</th>';
+    cols.forEach((col, ci) => {
+      th += '<th style="padding:5px 6px;'+bd+';'+bdR+';text-align:center;min-width:120px">' +
+        '<div style="font-weight:700;font-size:11px">' + col.type + (ci===0?' [A]':'') + '</div>' +
+        '<button onclick="removePjCol(' + ci + ')" style="border:none;background:none;color:#ef4444;cursor:pointer;font-size:9px;padding:0">삭제</button></th>';
+    });
+    th += '<th style="padding:7px 8px;'+bd+';text-align:center;font-weight:800;background:'+cFinal+';min-width:120px;font-size:12px">최종금액 [B]</th>';
+    if (hasInitial) th += '<th style="padding:7px 4px;'+bd+';text-align:center;font-weight:800;background:'+cFinal+';min-width:55px;font-size:10px">증감률<br>[B/A]</th>';
+    th += '</tr>';
+
+    // 년-월
+    th += '<tr style="background:#fafafa">';
+    th += '<td colspan="2" style="padding:5px 6px;'+bd+';'+bdR+';text-align:center;font-weight:600;font-size:11px">년 - 월</td>';
+    cols.forEach((col, ci) => {
+      th += '<td style="padding:3px 4px;'+bd+';'+bdR+'"><input class="form-input" tabindex="-1" value="'+(col.date||'')+'" placeholder="25.07" style="width:100%;padding:3px 5px;font-size:11px;text-align:center" onchange="pjPivotData.columns['+ci+'].date=this.value"></td>';
+    });
+    th += '<td style="'+bd+';background:'+cFinal+'"></td>';
+    if (hasInitial) th += '<td style="'+bd+';background:'+cFinal+'"></td>';
+    th += '</tr>';
+    thead.innerHTML = th;
+
+    // ── tbody ──
+    let tb = '';
+    let dStarted = false, iStarted = false;
+    let tabIdx = 1;
+
+    PJ_COST_ROWS.forEach(row => {
+      const isSub = row.key.startsWith('_');
+      const isDSub = row.group === 'direct_sub';
+      const isISub = row.group === 'indirect_sub';
+      const isDirect = row.group === 'direct' || isDSub;
+      const isIndirect = row.group === 'indirect' || isISub;
+      const isTax = row.group === 'tax';
+
+      // 행 배경색
+      let rowBg = isDirect ? cDirect : isIndirect ? cIndirect : '#fff';
+      if (isDSub) rowBg = cDSub;
+      if (isISub) rowBg = cISub;
+
+      tb += '<tr style="background:' + rowBg + '">';
+
+      // 그룹 헤더 셀 (rowspan)
+      if (row.group === 'direct' && !dStarted) {
+        dStarted = true;
+        const dc = PJ_COST_ROWS.filter(r => r.group === 'direct').length + 1;
+        tb += '<td rowspan="' + dc + '" style="padding:4px 2px;' + bdR + ';font-weight:800;text-align:center;background:' + cDirect + ';writing-mode:vertical-lr;letter-spacing:2px;font-size:11px;width:22px;color:#2e7d68">직접공사비</td>';
+      } else if (row.group === 'indirect' && !iStarted) {
+        iStarted = true;
+        const ic = PJ_COST_ROWS.filter(r => r.group === 'indirect').length + 1;
+        tb += '<td rowspan="' + ic + '" style="padding:4px 2px;' + bdR + ';font-weight:800;text-align:center;background:' + cIndirect + ';writing-mode:vertical-lr;letter-spacing:2px;font-size:11px;width:22px;color:#b8860b">간접공사비</td>';
+      } else if (isTax) {
+        tb += '<td style="' + bdR + ';background:#fff;width:22px"></td>';
+      }
+
+      // 라벨 셀
+      const labelWeight = isSub ? '700' : '500';
+      const labelSize = isSub ? '12px' : '11px';
+      tb += '<td style="padding:5px 8px;' + bd + ';' + bdR + ';text-align:center;font-weight:' + labelWeight + ';font-size:' + labelSize + ';white-space:nowrap">' + row.label + '</td>';
+
+      if (isSub) {
+        const keys = isDSub ? PJ_DIRECT_KEYS : PJ_INDIRECT_KEYS;
+        let subF = 0;
+        cols.forEach((_, ci) => {
+          const s = sumKeys(keys, ci);
+          subF += s;
+          tb += '<td style="padding:5px 8px;' + bd + ';' + bdR + ';text-align:right;font-weight:700;font-size:11px;font-variant-numeric:tabular-nums">' + fmtD(s) + '</td>';
+        });
+        tb += '<td style="padding:5px 8px;' + bd + ';text-align:right;font-weight:800;background:' + cFinal + ';font-variant-numeric:tabular-nums;font-size:12px">' + fmtD(subF) + '</td>';
+        if (hasInitial) {
+          const iv = sumKeys(keys, 0);
+          const pct = iv > 0 ? Math.round(subF / iv * 100) : (subF > 0 ? '-' : 0);
+          tb += '<td style="padding:5px 4px;' + bd + ';text-align:center;font-weight:600;background:' + cFinal + ';font-size:10px">' + pct + '%</td>';
+        }
+      } else {
+        let rf = 0;
+        cols.forEach((_, ci) => {
+          const key = row.key + '_' + ci;
+          const val = cells[key] || 0;
+          rf += val;
+          tb += '<td style="padding:2px 3px;' + bd + ';' + bdR + '"><input class="form-input" data-key="' + key + '" value="' + fmt(val) + '" placeholder="-" tabindex="' + (tabIdx++) + '" oninput="fmtPjAmt(this);updatePjPivotCell(\'' + key + '\',this.value)" style="width:100%;padding:3px 5px;font-size:11px;text-align:right;font-variant-numeric:tabular-nums;border:none;background:transparent"></td>';
+        });
+        tb += '<td style="padding:5px 8px;' + bd + ';text-align:right;font-weight:600;background:' + cFinal + ';font-variant-numeric:tabular-nums;font-size:11px">' + fmtD(rf) + '</td>';
+        if (hasInitial) {
+          const iv = cells[row.key + '_0'] || 0;
+          const pct = iv > 0 ? Math.round(rf / iv * 100) : (rf > 0 ? '-' : 0);
+          tb += '<td style="padding:5px 4px;' + bd + ';text-align:center;font-weight:600;background:' + cFinal + ';font-size:10px">' + pct + '%</td>';
+        }
+      }
+      tb += '</tr>';
+    });
+    tbody.innerHTML = tb;
+
+    // ── tfoot: 총 공사금액 ──
+    let totalFinal = 0;
+    let tf = '<tr style="background:' + cTotal + ';font-weight:800">';
+    tf += '<td colspan="2" style="padding:8px 8px;text-align:center;font-size:13px">총 공사금액</td>';
+    cols.forEach((_, ci) => {
+      const ct = sumKeys(PJ_INPUT_KEYS, ci);
+      totalFinal += ct;
+      tf += '<td style="padding:8px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px">' + fmtD(ct) + '</td>';
+    });
+    tf += '<td style="padding:8px 8px;text-align:right;font-size:13px;background:' + cFinal + ';font-variant-numeric:tabular-nums">' + fmtD(totalFinal) + '</td>';
+    if (hasInitial) {
+      const it = sumKeys(PJ_INPUT_KEYS, 0);
+      tf += '<td style="padding:8px 4px;text-align:center;font-weight:800;background:' + cFinal + '">' + (it>0?Math.round(totalFinal/it*100):0) + '%</td>';
+    }
+    tf += '</tr>';
+    tfoot.innerHTML = tf;
+
+    const gt = document.getElementById('pj-grand-total');
+    if (gt) gt.textContent = totalFinal > 0 ? totalFinal.toLocaleString() + '원' : '-';
+    const cc = document.getElementById('pj-contract-count');
+    if (cc) cc.textContent = cols.length + '건';
+  }
+
+
+  function updatePjPivotCell(key, val) {
+    pjPivotData.cells[key] = Number((val || '0').replace(/[^\d]/g, ''));
+  }
+
+  // 셀 blur 시에만 전체 테이블 갱신 (최종금액/증감률 반영)
+  document.addEventListener('focusout', function(e) {
+    if (e.target && e.target.dataset && e.target.dataset.key && document.getElementById('pj-pivot-tbody')?.contains(e.target)) {
+      renderPjPivot();
+    }
+  });
+
+  function addPjContractCol() {
+    document.getElementById('pj-col-modal')?.remove();
+    const typeOpts = PJ_CT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+    const overlay = document.createElement('div');
+    overlay.id = 'pj-col-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+        <div style="font-size:15px;font-weight:800;margin-bottom:14px">📑 계약 열 추가</div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">구분</label>
+          <select id="pj-col-type" class="form-select" style="width:100%;padding:8px;font-size:13px"><option value="">-- 선택 --</option>${typeOpts}</select>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">년-월</label>
+          <input id="pj-col-date" class="form-input" placeholder="예: 25.07" style="width:100%;padding:8px;font-size:13px">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById('pj-col-modal').remove()" style="padding:8px 18px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>
+          <button onclick="confirmAddPjCol()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">추가</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+  }
+
+  function confirmAddPjCol() {
+    const type = document.getElementById('pj-col-type')?.value;
+    const date = document.getElementById('pj-col-date')?.value || '';
+    if (!type) { showToast('구분을 선택해주세요', 'error'); return; }
+    pjPivotData.columns.push({ type: type, date: date });
+    document.getElementById('pj-col-modal').remove();
+    renderPjPivot();
+    showToast('✅ ' + type + ' 열이 추가되었습니다. 💾 저장을 눌러 확정하세요!', 'success');
+  }
+
+  function removePjCol(ci) {
+    document.getElementById('pj-del-col-modal')?.remove();
+    const colName = pjPivotData.columns[ci]?.type || '';
+    var overlay = document.createElement('div');
+    overlay.id = 'pj-del-col-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">'
+      + '<div style="font-size:15px;font-weight:800;margin-bottom:12px">🗑 열 삭제</div>'
+      + '<div style="font-size:13px;color:#6b7280;margin-bottom:18px"><b>' + colName + '</b> 열을 삭제하시겠습니까?<br>해당 열의 금액 데이터도 모두 삭제됩니다.</div>'
+      + '<div style="display:flex;gap:8px;justify-content:center">'
+      + '<button onclick="document.getElementById(\'pj-del-col-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
+      + '<button onclick="confirmRemovePjCol(' + ci + ')" style="padding:8px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:700;cursor:pointer">삭제</button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+  }
+
+  function confirmRemovePjCol(ci) {
+    document.getElementById('pj-del-col-modal')?.remove();
+    // 셀 데이터 삭제 & 인덱스 재정렬
+    const newCells = {};
+    const cols = pjPivotData.columns;
+    cols.forEach((col, oi) => {
+      if (oi === ci) return;
+      const ni = oi > ci ? oi - 1 : oi;
+      PJ_INPUT_KEYS.forEach(row => {
+        const oldKey = row + '_' + oi;
+        const newKey = row + '_' + ni;
+        if (pjPivotData.cells[oldKey]) newCells[newKey] = pjPivotData.cells[oldKey];
+      });
+    });
+    pjPivotData.cells = newCells;
+    pjPivotData.columns.splice(ci, 1);
+    renderPjPivot();
+    showToast('🗑 열이 삭제되었습니다. 💾 저장을 눌러 확정하세요!', 'success');
+  }
+
+  // renderPjContracts → 호환용 (loadProjectInfo에서 호출)
+  function renderPjContracts() { loadPjPivot(); }
+  function calcPjContractSum() {}
+  function renderPjContractTable() {}
+
+  function calcPjRemainDays() {
+    const endEl = document.getElementById('pj-end-date');
+    const remainEl = document.getElementById('pj-remain-days');
+    if (!endEl || !remainEl) return;
+    if (endEl.value) {
+      const end = new Date(endEl.value);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const diff = Math.ceil((end - today) / (1000*60*60*24));
+      if (diff > 0) {
+        remainEl.textContent = 'D-' + diff;
+        remainEl.style.color = diff < 90 ? 'var(--danger)' : 'var(--accent)';
+      } else if (diff === 0) {
+        remainEl.textContent = 'D-Day';
+        remainEl.style.color = 'var(--danger)';
+      } else {
+        remainEl.textContent = 'D+' + Math.abs(diff) + ' (초과)';
+        remainEl.style.color = 'var(--danger)';
+      }
+    } else {
+      remainEl.textContent = '-';
+    }
+  }
+
+  // 준공일 변경 시 잔여일수 자동 계산
+  document.addEventListener('change', function(e) {
+    if (e.target.id === 'pj-end-date') calcPjRemainDays();
+  });
+
+  // 조직도 테이블
+  function renderOrgTable(orgData) {
+    const tbody = document.getElementById('pj-org-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = orgData.map((r, i) => `<tr>
+      <td><input class="form-input" value="${r.title||''}" placeholder="직책" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td><input class="form-input" value="${r.name||''}" placeholder="성명" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td><input class="form-input" value="${r.phone||''}" placeholder="연락처" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td><input class="form-input" value="${r.note||''}" placeholder="비고" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td style="text-align:center"><button onclick="this.closest('tr').remove()" style="border:none;background:none;color:var(--danger);cursor:pointer;font-size:14px">✕</button></td>
+    </tr>`).join('');
+  }
+
+  function addOrgRow() {
+    const tbody = document.getElementById('pj-org-tbody');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="form-input" placeholder="직책" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td><input class="form-input" placeholder="성명" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td><input class="form-input" placeholder="연락처" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td><input class="form-input" placeholder="비고" style="width:100%;padding:5px 8px;font-size:12px"></td>
+      <td style="text-align:center"><button onclick="this.closest('tr').remove()" style="border:none;background:none;color:var(--danger);cursor:pointer;font-size:14px">✕</button></td>`;
+    tbody.appendChild(tr);
+  }
+
+  function exportProjectPDF() {
+    showToast('📄 PDF 출력 기능은 개발 예정입니다.', 'info');
+  }
+
+  function togglePjSection(id) {
+    const sec = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    if (!sec) return;
+    const isHidden = sec.style.display === 'none';
+    sec.style.display = isHidden ? '' : 'none';
+    if (arrow) arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(-90deg)';
+    // 안내 텍스트 변경
+    const header = sec.previousElementSibling;
+    if (header) {
+      const hint = header.querySelector('span[style*="color:var(--text3)"]');
+      if (hint) hint.textContent = isHidden ? '클릭하여 접기' : '클릭하여 펼치기';
+    }
+  }
+
+  // 페이지 로드 시 프로젝트 정보 불러오기
+  loadProjectInfo();
+
+  // 도급현황 탭 렌더
+  let dogupFilterType = 'all';
+
+  function renderDogupView() {
+    var key = currentProjectId ? 'cm_project_' + currentProjectId : 'cm_project_info';
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    const pivot = saved.pivotData || { columns: [], cells: {} };
+    const cols = pivot.columns;
+    const cells = pivot.cells;
+    const fmtD = v => v > 0 ? v.toLocaleString() : '-';
+    const fmtEok = v => v > 0 ? (v / 100000000).toFixed(1) + '억' : '-';
+    const sumKeys = (keys, ci) => keys.reduce((s, k) => s + (cells[k + '_' + ci] || 0), 0);
+    const hasInitial = cols.length > 0 && cols[0].type === '당초계약';
+
+    const cDirect = '#e8f5e9'; const cDSub = '#c8e6c9';
+    const cIndirect = '#fff8e1'; const cISub = '#ffecb3';
+    const cFinal = '#fffde7'; const cTotal = '#ffff00';
+    const bd = 'border-bottom:1px solid #e0e0e0';
+    const bdR = 'border-right:1px solid #e0e0e0';
+
+    let totalAll = 0, initialTotal = 0, changeTotal = 0;
+    cols.forEach(function(col, ci) {
+      var ct = sumKeys(PJ_INPUT_KEYS, ci);
+      totalAll += ct;
+      if (ci === 0 && col.type === '당초계약') initialTotal = ct;
+      else changeTotal += ct;
+    });
+    var kpi1 = document.getElementById('dogup-kpi-total');
+    var kpi2 = document.getElementById('dogup-kpi-initial');
+    var kpi3 = document.getElementById('dogup-kpi-change');
+    if (kpi1) kpi1.textContent = fmtEok(totalAll);
+    if (kpi2) kpi2.textContent = fmtEok(initialTotal);
+    if (kpi3) kpi3.textContent = changeTotal !== 0 ? fmtEok(changeTotal) : '-';
+
+    var filterWrap = document.getElementById('dogup-filter-wrap');
+    if (filterWrap) filterWrap.innerHTML = '';
+
+    var tbody = document.getElementById('dogup-view-tbody');
+    var tfoot = document.getElementById('dogup-view-tfoot');
+    if (!tbody) return;
+
+    if (!cols.length) {
+      var table = tbody.closest('table');
+      table.querySelector('thead').innerHTML = '<tr><th style="padding:30px;text-align:center;color:var(--text3)">프로젝트 개요에서 계약을 등록하고 💾 저장해 주세요.</th></tr>';
+      tbody.innerHTML = '';
+      if (tfoot) tfoot.style.display = 'none';
+      return;
+    }
+
+    var table = tbody.closest('table');
+    var th = '<tr style="background:#f5f5f5">';
+    th += '<th colspan="2" style="padding:7px 6px;'+bd+';'+bdR+';text-align:center;font-weight:700;font-size:12px">구 분</th>';
+    cols.forEach(function(col, ci) {
+      th += '<th style="padding:7px 8px;'+bd+';'+bdR+';text-align:center;font-weight:700;font-size:11px;min-width:120px">' + col.type + (ci===0?' [A]':'') + '</th>';
+    });
+    th += '<th style="padding:7px 8px;'+bd+';text-align:center;font-weight:800;background:'+cFinal+';min-width:120px;font-size:12px">최종금액 [B]</th>';
+    if (hasInitial) th += '<th style="padding:7px 4px;'+bd+';text-align:center;font-weight:800;background:'+cFinal+';min-width:55px;font-size:10px">증감률</th>';
+    th += '</tr>';
+    table.querySelector('thead').innerHTML = th;
+
+    var tb = '';
+    var dS = false, iS = false;
+    PJ_COST_ROWS.forEach(function(row) {
+      var isSub = row.key.startsWith('_');
+      var isDSub = row.group === 'direct_sub';
+      var isISub = row.group === 'indirect_sub';
+      var isDirect = row.group === 'direct' || isDSub;
+      var isIndirect = row.group === 'indirect' || isISub;
+      var rowBg = isDirect ? cDirect : isIndirect ? cIndirect : '#fff';
+      if (isDSub) rowBg = cDSub;
+      if (isISub) rowBg = cISub;
+
+      tb += '<tr style="background:' + rowBg + '">';
+
+      if (row.group === 'direct' && !dS) {
+        dS = true;
+        var dc = PJ_COST_ROWS.filter(function(r){return r.group==='direct'}).length + 1;
+        tb += '<td rowspan="' + dc + '" style="padding:4px 2px;'+bdR+';font-weight:800;text-align:center;background:'+cDirect+';writing-mode:vertical-lr;letter-spacing:2px;font-size:11px;width:22px;color:#2e7d68">직접공사비</td>';
+      } else if (row.group === 'indirect' && !iS) {
+        iS = true;
+        var ic = PJ_COST_ROWS.filter(function(r){return r.group==='indirect'}).length + 1;
+        tb += '<td rowspan="' + ic + '" style="padding:4px 2px;'+bdR+';font-weight:800;text-align:center;background:'+cIndirect+';writing-mode:vertical-lr;letter-spacing:2px;font-size:11px;width:22px;color:#b8860b">간접공사비</td>';
+      } else if (row.group === 'tax') {
+        tb += '<td style="'+bdR+';background:#fff;width:22px"></td>';
+      }
+
+      var lW = isSub ? '700' : '500';
+      var lS = isSub ? '12px' : '11px';
+      tb += '<td style="padding:5px 8px;'+bd+';'+bdR+';text-align:center;font-weight:'+lW+';font-size:'+lS+';white-space:nowrap">' + row.label + '</td>';
+
+      if (isSub) {
+        var keys = isDSub ? PJ_DIRECT_KEYS : PJ_INDIRECT_KEYS;
+        var subF = 0;
+        cols.forEach(function(_, ci) { var s = sumKeys(keys, ci); subF += s; tb += '<td style="padding:5px 8px;'+bd+';'+bdR+';text-align:right;font-weight:700;font-size:11px;font-variant-numeric:tabular-nums">' + fmtD(s) + '</td>'; });
+        tb += '<td style="padding:5px 8px;'+bd+';text-align:right;font-weight:800;background:'+cFinal+';font-size:12px">' + fmtD(subF) + '</td>';
+        if (hasInitial) { var iv = sumKeys(keys, 0); tb += '<td style="padding:5px 4px;'+bd+';text-align:center;background:'+cFinal+';font-size:10px">'+(iv>0?Math.round(subF/iv*100):0)+'%</td>'; }
+      } else {
+        var rf = 0;
+        cols.forEach(function(_, ci) { var v = cells[row.key+'_'+ci]||0; rf += v; tb += '<td style="padding:5px 8px;'+bd+';'+bdR+';text-align:right;font-variant-numeric:tabular-nums;font-size:11px">' + fmtD(v) + '</td>'; });
+        tb += '<td style="padding:5px 8px;'+bd+';text-align:right;font-weight:600;background:'+cFinal+';font-size:11px">' + fmtD(rf) + '</td>';
+        if (hasInitial) { var iv = cells[row.key+'_0']||0; tb += '<td style="padding:5px 4px;'+bd+';text-align:center;background:'+cFinal+';font-size:10px">'+(iv>0?Math.round(rf/iv*100):0)+'%</td>'; }
+      }
+      tb += '</tr>';
+    });
+    tbody.innerHTML = tb;
+
+    if (tfoot) {
+      tfoot.style.display = '';
+      var totalF = 0;
+      var tf = '<tr style="background:'+cTotal+';font-weight:800">';
+      tf += '<td colspan="2" style="padding:8px 8px;text-align:center;font-size:13px">총 공사금액</td>';
+      cols.forEach(function(_, ci) { var ct = sumKeys(PJ_INPUT_KEYS, ci); totalF += ct; tf += '<td style="padding:8px 8px;text-align:right;font-size:12px">' + fmtD(ct) + '</td>'; });
+      tf += '<td style="padding:8px 8px;text-align:right;font-size:13px;background:'+cFinal+'">' + fmtD(totalF) + '</td>';
+      if (hasInitial) { var it = sumKeys(PJ_INPUT_KEYS, 0); tf += '<td style="padding:8px 4px;text-align:center;background:'+cFinal+'">'+(it>0?Math.round(totalF/it*100):0)+'%</td>'; }
+      tf += '</tr>';
+      tfoot.innerHTML = tf;
+    }
+  }
+
+
+
   /* ===== 계약관리 ===== */
   const CONTRACT_GONGJONG = [
     '직영공사','골조','입선','조적경량','석고타공',
@@ -7293,7 +8974,7 @@ window.cmsLogout=function(){
 
   // ===== 백업 / 복원 =====
   function exportData() {
-    const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_meals'];
+    const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_meals'];
     const data = {};
     KEYS.forEach(k => {
       const v = localStorage.getItem(k);
@@ -7318,7 +8999,7 @@ window.cmsLogout=function(){
     reader.onload = function(e) {
       try {
         const data = JSON.parse(e.target.result);
-        const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_meals'];
+        const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_meals'];
         let count = 0;
         KEYS.forEach(k => {
           if (data[k] !== undefined) {
@@ -9045,7 +10726,7 @@ window.cmsLogout=function(){
 
   // 백업
   window.exportData=function(){
-    var KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_expenses','cm_meals','cm_restaurants'];
+    var KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_expenses','cm_meals','cm_restaurants'];
     var data={};KEYS.forEach(k=>{var v=localStorage.getItem(k);if(v){try{data[k]=JSON.parse(v);}catch(e){data[k]=v;}}});
     var a=document.createElement('a');a.href='data:application/json;base64,'+btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(data,null,2))));
     a.download='백업_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);showToast('✅ 백업 완료','success');
@@ -9053,7 +10734,7 @@ window.cmsLogout=function(){
   window.importData=function(event){
     var file=event.target.files[0];if(!file)return;var r=new FileReader();
     r.onload=function(e){try{var data=JSON.parse(e.target.result);
-    var KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_expenses','cm_meals','cm_restaurants'];
+    var KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_expenses','cm_meals','cm_restaurants'];
     var c=0;KEYS.forEach(k=>{if(data[k]!==undefined){localStorage.setItem(k,JSON.stringify(data[k]));c++;}});
     showToast('✅ '+c+'개 복원!','success');setTimeout(()=>location.reload(),1500);
     }catch(err){showToast('❌ 형식 오류','error');}};r.readAsText(file);event.target.value='';
