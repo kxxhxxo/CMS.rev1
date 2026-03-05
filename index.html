@@ -3316,6 +3316,18 @@ window.cmsLogout=function(){
         </div>
       </div>
 
+      <!-- 경비월 선택 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700">경비월</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="moveExpMonth(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:15px">‹</button>
+          <span id="exp-month-label" style="font-size:15px;font-weight:800;min-width:120px;text-align:center"></span>
+          <button id="exp-month-next-btn" onclick="moveExpMonth(1)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:15px">›</button>
+        </div>
+        <span id="exp-month-readonly-badge" style="display:none;font-size:11px;color:var(--danger);background:#fee2e2;padding:3px 10px;border-radius:12px;font-weight:600">🔒 과거 월 (수정불가)</span>
+        <input type="hidden" id="exp-common-month">
+      </div>
+
       <!-- 결제유형 탭 -->
       <div class="tabs" id="exp-main-tabs">
         <div class="tab active" onclick="expSwitchMain(this,'exp-t-card')">💳 법인카드</div>
@@ -3332,19 +3344,21 @@ window.cmsLogout=function(){
           <div class="card-body" style="padding:16px 20px">
             <div style="font-size:13px;font-weight:800;margin-bottom:12px">💳 법인카드 경비 등록</div>
             <input type="hidden" id="exp-edit-idx-card" value="-1">
-            <div style="display:grid;grid-template-columns:130px 140px 120px 130px 1fr auto;gap:8px;align-items:end">
+            <div style="display:grid;grid-template-columns:130px 140px 1fr 130px;gap:8px;align-items:end;margin-bottom:8px">
               <div><label class="form-label" style="font-size:10px">지출일 *</label><input type="date" class="form-input" id="exp-f-date-card" data-max-today="1" style="font-size:12px;padding:6px 8px"></div>
               <div><label class="form-label" style="font-size:10px">용도 *</label><select class="form-select" id="exp-f-usage-card" style="font-size:12px;padding:6px 8px"><option value="">-- 선택 --</option><option>현장관리비</option><option>소모품비</option><option>안전관리비</option><option>통신/광열비</option><option>식대/복리후생</option><option>교통비/유류비</option><option>인쇄/사무용품</option><option>수선/수리비</option><option>기타경비</option></select></div>
               <div><label class="form-label" style="font-size:10px">거래처</label><input class="form-input" id="exp-f-vendor-card" placeholder="거래처" style="font-size:12px;padding:6px 8px"></div>
               <div><label class="form-label" style="font-size:10px">금액 *</label><input class="form-input" id="exp-f-amt-card" placeholder="100,000" oninput="fmtCommaExp(this)" style="font-size:12px;padding:6px 8px;text-align:right"></div>
-              <div><label class="form-label" style="font-size:10px">내용 * <span style="font-weight:400;color:var(--text3)">(식사/회식/접대비는 참석자명 모두 기입)</span></label><input class="form-input" id="exp-f-desc-card" placeholder="식사/회식/접대비는 참석자명 모두 기입" style="font-size:12px;padding:6px 8px"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+              <div><label class="form-label" style="font-size:10px">내용 *</label><input class="form-input" id="exp-f-desc-card" placeholder="식사/회식/접대비는 참석자명 모두 기입" style="font-size:12px;padding:6px 8px"></div>
               <button class="btn btn-primary" onclick="expSaveType('법인카드')" style="height:34px;font-size:12px" id="exp-btn-card">저장</button>
             </div>
             <div id="exp-err-card" style="display:none;margin-top:6px;font-size:11px;color:var(--danger)"></div>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-          <input type="month" class="form-input" id="exp-fm-card" style="width:150px" onchange="expRenderTab('법인카드')">
+          
           <select class="form-select" id="exp-fu-card" style="width:140px" onchange="expRenderTab('법인카드')"><option value="">전체 용도</option><option>현장관리비</option><option>소모품비</option><option>안전관리비</option><option>통신/광열비</option><option>식대/복리후생</option><option>교통비/유류비</option><option>인쇄/사무용품</option><option>수선/수리비</option><option>기타경비</option></select>
           <div style="flex:1"></div><span style="font-size:12px;color:var(--text3)" id="exp-info-card"></span>
         </div>
@@ -3358,19 +3372,21 @@ window.cmsLogout=function(){
           <div class="card-body" style="padding:16px 20px">
             <div style="font-size:13px;font-weight:800;margin-bottom:12px">💵 현금 경비 등록</div>
             <input type="hidden" id="exp-edit-idx-cash" value="-1">
-            <div style="display:grid;grid-template-columns:130px 140px 120px 130px 1fr auto;gap:8px;align-items:end">
+            <div style="display:grid;grid-template-columns:130px 140px 1fr 130px;gap:8px;align-items:end;margin-bottom:8px">
               <div><label class="form-label" style="font-size:10px">지출일 *</label><input type="date" class="form-input" id="exp-f-date-cash" data-max-today="1" style="font-size:12px;padding:6px 8px"></div>
               <div><label class="form-label" style="font-size:10px">용도 *</label><select class="form-select" id="exp-f-usage-cash" style="font-size:12px;padding:6px 8px"><option value="">-- 선택 --</option><option>현장관리비</option><option>소모품비</option><option>안전관리비</option><option>통신/광열비</option><option>식대/복리후생</option><option>교통비/유류비</option><option>인쇄/사무용품</option><option>수선/수리비</option><option>기타경비</option></select></div>
               <div><label class="form-label" style="font-size:10px">거래처</label><input class="form-input" id="exp-f-vendor-cash" placeholder="거래처" style="font-size:12px;padding:6px 8px"></div>
               <div><label class="form-label" style="font-size:10px">금액 *</label><input class="form-input" id="exp-f-amt-cash" placeholder="100,000" oninput="fmtCommaExp(this)" style="font-size:12px;padding:6px 8px;text-align:right"></div>
-              <div><label class="form-label" style="font-size:10px">내용 * <span style="font-weight:400;color:var(--text3)">(식사/회식/접대비는 참석자명 모두 기입)</span></label><input class="form-input" id="exp-f-desc-cash" placeholder="식사/회식/접대비는 참석자명 모두 기입" style="font-size:12px;padding:6px 8px"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+              <div><label class="form-label" style="font-size:10px">내용 *</label><input class="form-input" id="exp-f-desc-cash" placeholder="식사/회식/접대비는 참석자명 모두 기입" style="font-size:12px;padding:6px 8px"></div>
               <button class="btn btn-primary" onclick="expSaveType('현금')" style="height:34px;font-size:12px;background:var(--accent3)" id="exp-btn-cash">저장</button>
             </div>
             <div id="exp-err-cash" style="display:none;margin-top:6px;font-size:11px;color:var(--danger)"></div>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-          <input type="month" class="form-input" id="exp-fm-cash" style="width:150px" onchange="expRenderTab('현금')">
+          
           <select class="form-select" id="exp-fu-cash" style="width:140px" onchange="expRenderTab('현금')"><option value="">전체 용도</option><option>현장관리비</option><option>소모품비</option><option>안전관리비</option><option>통신/광열비</option><option>식대/복리후생</option><option>교통비/유류비</option><option>인쇄/사무용품</option><option>수선/수리비</option><option>기타경비</option></select>
           <div style="flex:1"></div><span style="font-size:12px;color:var(--text3)" id="exp-info-cash"></span>
         </div>
@@ -3384,7 +3400,7 @@ window.cmsLogout=function(){
           <div class="card-body" style="padding:16px 20px">
             <div style="font-size:13px;font-weight:800;margin-bottom:12px">📄 세금계산서 경비 등록</div>
             <input type="hidden" id="exp-edit-idx-tax" value="-1">
-            <div style="display:grid;grid-template-columns:130px 140px 150px 130px 120px 120px;gap:8px;align-items:end;margin-bottom:8px">
+            <div style="display:grid;grid-template-columns:130px 140px 1fr 130px 110px 100px;gap:8px;align-items:end;margin-bottom:8px">
               <div><label class="form-label" style="font-size:10px">지출일 *</label><input type="date" class="form-input" id="exp-f-date-tax" data-max-today="1" style="font-size:12px;padding:6px 8px"></div>
               <div><label class="form-label" style="font-size:10px">용도 *</label><select class="form-select" id="exp-f-usage-tax" style="font-size:12px;padding:6px 8px"><option value="">-- 선택 --</option><option>현장관리비</option><option>소모품비</option><option>안전관리비</option><option>통신/광열비</option><option>식대/복리후생</option><option>교통비/유류비</option><option>인쇄/사무용품</option><option>수선/수리비</option><option>기타경비</option></select></div>
               <div><label class="form-label" style="font-size:10px">거래처</label><input class="form-input" id="exp-f-vendor-tax" placeholder="거래처" style="font-size:12px;padding:6px 8px"></div>
@@ -3392,16 +3408,15 @@ window.cmsLogout=function(){
               <div><label class="form-label" style="font-size:10px">부가세 (자동10%)</label><input class="form-input" id="exp-f-vat-tax" placeholder="자동" oninput="fmtCommaExp(this)" style="font-size:12px;padding:6px 8px;text-align:right"></div>
               <div><label class="form-label" style="font-size:10px">합계</label><div class="form-input" id="exp-f-total-tax" style="font-size:12px;padding:6px 8px;text-align:right;font-weight:800;color:var(--accent4);background:var(--surface2)">0</div></div>
             </div>
-            <div style="display:grid;grid-template-columns:180px 1fr auto;gap:8px;align-items:end">
-              <div><label class="form-label" style="font-size:10px">사업자등록번호</label><input class="form-input" id="exp-f-bizno-tax" placeholder="000-00-00000" style="font-size:12px;padding:6px 8px"></div>
-              <div><label class="form-label" style="font-size:10px">내용 * <span style="font-weight:400;color:var(--text3)">(식사/회식/접대비는 참석자명 모두 기입)</span></label><input class="form-input" id="exp-f-desc-tax" placeholder="식사/회식/접대비는 참석자명 모두 기입" style="font-size:12px;padding:6px 8px"></div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+              <div><label class="form-label" style="font-size:10px">내용 *</label><input class="form-input" id="exp-f-desc-tax" placeholder="식사/회식/접대비는 참석자명 모두 기입" style="font-size:12px;padding:6px 8px"></div>
               <button class="btn btn-primary" onclick="expSaveType('세금계산서')" style="height:34px;font-size:12px;background:var(--accent4)" id="exp-btn-tax">저장</button>
             </div>
             <div id="exp-err-tax" style="display:none;margin-top:6px;font-size:11px;color:var(--danger)"></div>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-          <input type="month" class="form-input" id="exp-fm-tax" style="width:150px" onchange="expRenderTab('세금계산서')">
+          
           <select class="form-select" id="exp-fu-tax" style="width:140px" onchange="expRenderTab('세금계산서')"><option value="">전체 용도</option><option>현장관리비</option><option>소모품비</option><option>안전관리비</option><option>통신/광열비</option><option>식대/복리후생</option><option>교통비/유류비</option><option>인쇄/사무용품</option><option>수선/수리비</option><option>기타경비</option></select>
           <div style="flex:1"></div><span style="font-size:12px;color:var(--text3)" id="exp-info-tax"></span>
         </div>
@@ -3413,7 +3428,7 @@ window.cmsLogout=function(){
       <div id="exp-t-hq" class="exp-main-panel" style="display:none">
         <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:12px;color:#1e40af;margin-bottom:16px">🏢 본사에서 입력한 경비 내역입니다. 현장에서는 조회만 가능합니다.</div>
         <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-          <input type="month" class="form-input" id="exp-fm-hq" style="width:150px" onchange="expRenderTab('본사집행분')">
+          
           <div style="flex:1"></div><span style="font-size:12px;color:var(--text3)" id="exp-info-hq"></span>
         </div>
         <div class="card"><table class="table"><thead><tr><th>일자</th><th>용도</th><th>거래처</th><th>금액</th><th>내용</th></tr></thead><tbody id="exp-tbody-hq"></tbody><tfoot><tr style="background:var(--surface2)"><td colspan="3" style="font-weight:700;text-align:right;font-size:12px">합계</td><td class="amount" style="font-weight:800;color:var(--accent2)" id="exp-sum-hq">0</td><td></td></tr></tfoot></table></div>
@@ -6016,7 +6031,7 @@ window.cmsLogout=function(){
       const detailId = 'wd-' + realIdx;
       return `<tr onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'':'none'" style="cursor:pointer">
         <td style="font-weight:700"><div style="display:flex;align-items:center;gap:8px"><img src="${w.photo||gDummyPhoto(w.name)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"><span>${w.name}</span></div></td>
-        <td style="font-size:12px">${displayJob(w)}${w.job==='실행예산팀'?'<br><span style="color:var(--text3);font-size:10px">실행예산팀</span>':w.gongjong?'<br><span style="color:var(--text3);font-size:10px">'+w.gongjong+'</span>':''}</td>
+        <td style="font-size:12px">${displayJob(w)}${w.gongjong && w.job!=='실행예산팀'?'<br><span style="color:var(--text3);font-size:10px">'+w.gongjong+'</span>':''}</td>
         <td>
           <span class="badge ${w.empType==='monthly'?'badge-blue':'badge-green'}" style="font-size:10px">${empLabel}</span>
           <div style="font-size:12px;font-weight:600;margin-top:2px">${wage}</div>
@@ -12010,15 +12025,55 @@ window.cmsLogout=function(){
   // 필터 초기화
   function initFilters(){
     var ym=new Date().getFullYear()+'-'+(''+(new Date().getMonth()+1)).padStart(2,'0');
-    ['card','cash','tax','hq'].forEach(k=>{var el=document.getElementById('exp-fm-'+k);if(el)el.value=ym;});
+    var cm=document.getElementById('exp-common-month');if(cm)cm.value=ym;
+    updateExpMonthLabel();
     ['card','cash','tax'].forEach(k=>{var el=document.getElementById('exp-f-date-'+k);if(el)el.value=new Date().toISOString().slice(0,10);});
     var um=document.getElementById('exp-usage-month');if(um)um.value=ym;
+  }
+
+  function updateExpMonthLabel(){
+    var v=document.getElementById('exp-common-month')?.value||'';
+    var label=document.getElementById('exp-month-label');
+    if(label&&v) label.textContent=v.substring(0,4)+'년 '+parseInt(v.substring(5))+'월';
+    // 미래 월 체크
+    var now=new Date();
+    var curYm=now.getFullYear()+'-'+(''+(now.getMonth()+1)).padStart(2,'0');
+    var nextBtn=document.getElementById('exp-month-next-btn');
+    if(nextBtn) nextBtn.disabled=(v>=curYm);
+    if(nextBtn) nextBtn.style.opacity=(v>=curYm)?'0.3':'1';
+    // 과거 월 수정 불가 뱃지
+    var badge=document.getElementById('exp-month-readonly-badge');
+    var isPast=v<curYm;
+    if(badge) badge.style.display=isPast?'':'none';
+    // 저장 버튼 비활성화 (과거 월)
+    ['exp-btn-card','exp-btn-cash','exp-btn-tax'].forEach(function(id){
+      var btn=document.getElementById(id);
+      if(btn){btn.disabled=isPast;btn.style.opacity=isPast?'0.4':'1';btn.title=isPast?'과거 월은 수정할 수 없습니다':'';}
+    });
+  }
+
+  window.moveExpMonth=function(delta){
+    var el=document.getElementById('exp-common-month');
+    if(!el||!el.value) return;
+    var parts=el.value.split('-');
+    var y=parseInt(parts[0]),m=parseInt(parts[1])-1;
+    m+=delta;
+    if(m>11){m=0;y++;}
+    if(m<0){m=11;y--;}
+    var newYm=y+'-'+(''+(m+1)).padStart(2,'0');
+    // 미래 월 차단
+    var now=new Date();
+    var curYm=now.getFullYear()+'-'+(''+(now.getMonth()+1)).padStart(2,'0');
+    if(newYm>curYm) return;
+    el.value=newYm;
+    updateExpMonthLabel();
+    expRender();
   }
 
   // 탭별 렌더
   window.expRenderTab=function(type){
     var k=TYPE_KEYS[type], data=loadExp().filter(d=>d.type===type);
-    var ym=document.getElementById('exp-fm-'+k);if(ym&&ym.value)data=data.filter(d=>d.date.startsWith(ym.value));
+    var ym=document.getElementById('exp-common-month');if(ym&&ym.value)data=data.filter(d=>d.date.startsWith(ym.value));
     var fu=document.getElementById('exp-fu-'+k);if(fu&&fu.value)data=data.filter(d=>d.usage===fu.value);
     data.sort((a,b)=>b.date.localeCompare(a.date));
     var all=loadExp(), tbody=document.getElementById('exp-tbody-'+k);
@@ -12455,7 +12510,7 @@ window.cmsLogout=function(){
       var days = monthlyAtt[w.name] || 0;
       if (days === 0 && w.empType !== 'monthly') return;
       var pay = w.empType === 'monthly' ? (Number(w.wage)||0) : Math.round((Number(w.wage)||0) * days);
-      staffWorkerList.push({ name: w.name, job: w.job || '-', empType: w.empType, wage: Number(w.wage)||0, days: days, pay: pay });
+      staffWorkerList.push({ name: w.name, job: (w.job==='실행예산팀'&&w.gongjong)?w.gongjong:(w.job||'-'), empType: w.empType, wage: Number(w.wage)||0, days: days, pay: pay });
     });
 
     var directTotal = staffTotal;
@@ -12500,7 +12555,7 @@ window.cmsLogout=function(){
         var days = monthlyAtt[w.name] || 0;
         if (days === 0 && w.empType !== 'monthly') return;
         var pay = w.empType === 'monthly' ? (Number(w.wage)||0) : Math.round((Number(w.wage)||0) * days);
-        html += '<tr><td style="padding:3px 8px;font-weight:600">' + w.name + '</td><td style="padding:3px 8px">' + (w.job||'-') + '</td><td style="padding:3px 8px"><span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;font-size:10px">' + (w.empType==='monthly'?'월급':'일당') + '</span></td><td style="padding:3px 8px;text-align:right">' + f(Number(w.wage)||0) + '</td><td style="padding:3px 8px;text-align:right">' + (w.empType==='monthly'?'-':days+'공수') + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f(pay) + '</td></tr>';
+        html += '<tr><td style="padding:3px 8px;font-weight:600">' + w.name + '</td><td style="padding:3px 8px">' + ((w.job==='실행예산팀'&&w.gongjong)?w.gongjong:(w.job||'-')) + '</td><td style="padding:3px 8px"><span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;font-size:10px">' + (w.empType==='monthly'?'월급':'일당') + '</span></td><td style="padding:3px 8px;text-align:right">' + f(Number(w.wage)||0) + '</td><td style="padding:3px 8px;text-align:right">' + (w.empType==='monthly'?'-':days+'공수') + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f(pay) + '</td></tr>';
       });
       html += detailFooter() + '</tr>';
     });
@@ -12541,7 +12596,7 @@ window.cmsLogout=function(){
     personNames.forEach(function(nm, idx) {
       var pm = personMeals[nm];
       var w = allMerged.find(function(x){return x.name===nm;});
-      var job = w ? (w.job||'-') : '-';
+      var job = w ? ((w.job==='실행예산팀'&&w.gongjong)?w.gongjong:(w.job||'-')) : '-';
       var attDays = monthlyAtt[nm] || 0;
       var mealCount = pm.b + pm.l + pm.d;
       // 평균 단가 = 총 식대 / 총 식수
@@ -12860,41 +12915,41 @@ window.cmsLogout=function(){
 
   /* ===== 조직관리 ===== */
   var DEFAULT_ORG_DATA = {
-    ceo: { name: '김홍수', title: '대표이사' },
-    coo: { name: '진행원', title: '경영총괄 전무' },
-    vp: { name: '이광훈', title: '부사장' },
-    audit: { name: '정완근 실장 / 김형철 고문', title: '감사실' },
-    safety: { name: '조동문 CSO / 김복수 상무', title: '안전보건실' },
+    ceo: { name: '홍길동', title: '대표이사' },
+    coo: { name: '장민수', title: '경영총괄 전무' },
+    vp: { name: '이서준', title: '부사장' },
+    audit: { name: '정태영 실장 / 김도현 고문', title: '감사실' },
+    safety: { name: '조영호 CSO / 김상우 상무', title: '안전보건실' },
     departments: [
-      { name: '재무회계팀', head: '박경화 부장', parent: '경영지원실' },
-      { name: '외주구매팀', head: '김용원 부장', parent: '경영지원실' },
+      { name: '재무회계팀', head: '박소연 부장', parent: '경영지원실' },
+      { name: '외주구매팀', head: '김준혁 부장', parent: '경영지원실' },
       { name: '업무팀', head: '', parent: '경영지원실' },
-      { name: '공사관리팀', head: '김용감 상무', parent: '경영지원실' },
-      { name: '예산견적팀', head: '손병휘 차장', parent: '경영지원실' }
+      { name: '공사관리팀', head: '김대성 상무', parent: '경영지원실' },
+      { name: '예산견적팀', head: '손정우 차장', parent: '경영지원실' }
     ],
     pms: [
-      { name: '윤상영', rank: '부사장', region: '인천지역 본부총괄', sites: [] },
-      { name: '김장섭', rank: '전무', region: '관급', sites: [] },
-      { name: '최재필', rank: '전무', region: '1팀', sites: [] },
-      { name: '이요환', rank: '상무', region: '2팀', sites: [] },
-      { name: '신용한', rank: '상무', region: '3팀', sites: [] },
-      { name: '김철환', rank: '상무', region: '4팀', sites: [] },
-      { name: '김덕', rank: '부장', region: '5팀', sites: [] },
-      { name: '김순곤', rank: '상무', region: '플랜트팀', sites: [] }
+      { name: '윤재호', rank: '부사장', region: '인천지역 본부총괄', sites: [] },
+      { name: '김영태', rank: '전무', region: '관급', sites: [] },
+      { name: '최동훈', rank: '전무', region: '1팀', sites: [] },
+      { name: '이승민', rank: '상무', region: '2팀', sites: [] },
+      { name: '신준서', rank: '상무', region: '3팀', sites: [] },
+      { name: '김현수', rank: '상무', region: '4팀', sites: [] },
+      { name: '김명훈', rank: '부장', region: '5팀', sites: [] },
+      { name: '김원태', rank: '상무', region: '플랜트팀', sites: [] }
     ]
   };
 
   window.getOrgData = function() {
     try {
       var saved = JSON.parse(localStorage.getItem('cm_org_data') || 'null');
-      if (saved && saved._v === 4) return saved;
+      if (saved && saved._v === 5) return saved;
       // 버전 없거나 구버전이면 기본값으로 리셋
-      DEFAULT_ORG_DATA._v = 4;
+      DEFAULT_ORG_DATA._v = 5;
       localStorage.removeItem('cm_org_data');
       return DEFAULT_ORG_DATA;
     } catch(e) { return DEFAULT_ORG_DATA; }
   }
-  window.saveOrgData = function(d) { d._v = 4; localStorage.setItem('cm_org_data', JSON.stringify(d)); }
+  window.saveOrgData = function(d) { d._v = 5; localStorage.setItem('cm_org_data', JSON.stringify(d)); }
 
   function getOrgAccounts() {
     try { return JSON.parse(localStorage.getItem('cm_accounts') || '[]'); } catch(e) { return []; }
@@ -12969,13 +13024,13 @@ window.cmsLogout=function(){
     var org = getOrgData();
     if (!org.teamMembers) {
       org.teamMembers = {
-        '재무회계팀': ['김명식 차장','천이나 대리','이예은 사원','정은아 사원','──','🚗 신인성 실장'],
-        '외주구매팀': ['박진균 차장','강익종 과장','홍소민 대리','신영석 차장','주창오 과장'],
-        '업무팀': ['최영진 사원'],
-        '공사관리팀': ['이재용 부장','전용성 차장','김종현 대리','곽상우 대리','박성수 대리','고유빈 사원'],
-        '예산견적팀': ['강태원 차장','황순철 차장','정성윤 차장','김정남 사원','박승하 사원'],
-        '안전보건실': ['김복수 상무/팀장','권학상 상무','정상익 차장','엄재복 대리'],
-        '감사실': ['정완근 실장','김형철 고문']
+        '재무회계팀': ['김태호 차장','천수빈 대리','이하늘 사원','정미래 사원','──','🚗 신동혁 실장'],
+        '외주구매팀': ['박성민 차장','강현우 과장','홍예진 대리','신재민 차장','주원석 과장'],
+        '업무팀': ['최유나 사원'],
+        '공사관리팀': ['이민준 부장','전승호 차장','김윤서 대리','곽동현 대리','박시우 대리','고하은 사원'],
+        '예산견적팀': ['강지훈 차장','황민석 차장','정한결 차장','김서현 사원','박지안 사원'],
+        '안전보건실': ['김상우 상무/팀장','권진호 상무','정우성 차장','엄지훈 대리'],
+        '감사실': ['정태영 실장','김도현 고문']
       };
       saveOrgData(org);
     }
@@ -13027,7 +13082,7 @@ window.cmsLogout=function(){
     html += '<div style="font-size:15px;font-weight:700;margin-top:6px">' + editable('org-ed-ceo', org.ceo.name) + '</div>';
     html += '</td>';
     html += '<td style="vertical-align:middle"><div style="width:40px;height:2px;background:#bbb"></div></td>';
-    html += '<td style="vertical-align:middle">' + sideBox('안전보건실', '조동문 CSO', '안전보건실') + '</td>';
+    html += '<td style="vertical-align:middle">' + sideBox('안전보건실', '조영호 CSO', '안전보건실') + '</td>';
     html += '</tr></table>';
 
     // ═══ 세로선 ═══
