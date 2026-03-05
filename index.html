@@ -1248,6 +1248,11 @@ window.cmsLogout=function(){
     <span class="nav-icon">📈</span> 원가/정산보고서
   </div>
 
+  <div class="sidebar-section">관리</div>
+  <div class="nav-item" onclick="navigate('org', this)">
+    <span class="nav-icon">🏢</span> 조직관리
+  </div>
+
   <div class="sidebar-footer">
     <div class="user-card" style="flex-direction:column;gap:8px">
       <div style="display:flex;align-items:center;gap:10px;width:100%">
@@ -1508,6 +1513,7 @@ window.cmsLogout=function(){
                   <th style="width:40px;text-align:center">No.</th>
                   <th style="min-width:100px">건설사</th>
                   <th style="min-width:200px">공사명</th>
+                  <th style="min-width:60px;text-align:center">PM팀</th>
                   <th style="min-width:70px;text-align:center">현장소장</th>
                   <th style="min-width:70px;text-align:center">현장공무</th>
                   <th style="min-width:100px;text-align:right">총 도급금액</th>
@@ -1646,6 +1652,12 @@ window.cmsLogout=function(){
                 <div>
                   <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">원도급사 담당자</label>
                   <input class="form-input" id="pj-contractor-contact" placeholder="담당자명 / 연락처" style="width:100%">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">담당 PM</label>
+                  <select class="form-select" id="pj-pm" style="width:100%">
+                    <option value="">-- PM 선택 --</option>
+                  </select>
                 </div>
                 <div>
                   <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장소장</label>
@@ -2191,7 +2203,12 @@ window.cmsLogout=function(){
       <!-- 정산월 선택 -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
         <label style="font-size:13px;font-weight:700">정산월</label>
-        <input type="month" class="form-input" id="pr-month" style="width:180px;padding:7px 12px" onchange="renderPayroll()">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="movePrMonth(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:15px">‹</button>
+          <span id="pr-month-label" style="font-size:15px;font-weight:800;min-width:120px;text-align:center"></span>
+          <button onclick="movePrMonth(1)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:15px">›</button>
+        </div>
+        <input type="hidden" id="pr-month">
       </div>
 
       <!-- 탭 -->
@@ -2606,17 +2623,14 @@ window.cmsLogout=function(){
                   <div class="step-node" id="snode-2" onclick="switchWorkerStep(2)"><span>2</span></div>
                   <div class="step-line" id="sline-2"></div>
                   <div class="step-node" id="snode-3" onclick="switchWorkerStep(3)"><span>3</span></div>
-                  <div class="step-line" id="sline-3"></div>
-                  <div class="step-node" id="snode-4" onclick="switchWorkerStep(4)"><span>4</span></div>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-top:-18px;margin-bottom:20px;padding:0 4px">
-                  <span style="font-size:11px;color:var(--text3);font-weight:600">기본정보</span>
-                  <span style="font-size:11px;color:var(--text3);font-weight:600">신상정보</span>
+                  <span style="font-size:11px;color:var(--text3);font-weight:600">기본 · 신상</span>
                   <span style="font-size:11px;color:var(--text3);font-weight:600">계좌정보</span>
                   <span style="font-size:11px;color:var(--text3);font-weight:600">근무정보</span>
                 </div>
 
-                <!-- ① 기본정보 -->
+                <!-- ① 기본정보 + 신상 -->
                 <div id="wstep-1">
                   <!-- 프로필 사진 -->
                   <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
@@ -2635,12 +2649,94 @@ window.cmsLogout=function(){
                     <div class="form-group">
                       <label class="form-label required">이름</label>
                       <input class="form-input" id="w-name" placeholder="홍길동">
+                      <div id="w-master-match" style="display:none"></div>
                     </div>
                     <div class="form-group">
                       <label class="form-label required">연락처</label>
                       <input class="form-input" id="w-phone" placeholder="010-0000-0000" oninput="formatPhone(this)">
                     </div>
                   </div>
+                  <div class="form-grid-2">
+                    <div class="form-group">
+                      <label class="form-label required">내/외국인</label>
+                      <select class="form-select" id="w-nationality" onchange="toggleForeignFields()">
+                        <option value="domestic">내국인</option>
+                        <option value="foreign">외국인</option>
+                      </select>
+                    </div>
+                    <div class="form-group" id="w-stay-code-group" style="display:none">
+                      <label class="form-label">체류 코드</label>
+                      <select class="form-select" id="w-stay-code">
+                        <option value="">-- 선택 --</option>
+                        <option>E-7 (특정활동)</option>
+                        <option>E-9 (비전문취업)</option>
+                        <option>H-2 (방문취업)</option>
+                        <option>F-4 (재외동포)</option>
+                        <option>F-5 (영주)</option>
+                        <option>F-6 (결혼이민)</option>
+                        <option>기타</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label required">주민등록번호</label>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <input class="form-input" id="w-id-front" placeholder="000000" maxlength="6" style="width:130px" oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===6){document.getElementById('w-id-back').focus();searchMasterByIdFront();}">
+                      <span style="color:var(--text3);font-weight:700">—</span>
+                      <input class="form-input" id="w-id-back" placeholder="●●●●●●●" maxlength="7" type="password" style="width:140px" oninput="this.value=this.value.replace(/\D/g,'')">
+                    </div>
+                    <div id="w-master-match-id" style="display:none;margin-top:6px"></div>
+                    <div style="font-size:11px;color:var(--text3);margin-top:4px">※ 암호화 저장됩니다</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">주소</label>
+                    <div style="display:flex;gap:6px;margin-bottom:6px">
+                      <input class="form-input" id="w-zipcode" placeholder="우편번호 (선택)" style="width:130px">
+                      <button type="button" class="btn btn-secondary" style="white-space:nowrap;padding:8px 14px;font-size:12px" onclick="searchAddress()">🔍 주소 검색</button>
+                      <span style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap">※ 직접 입력도 가능</span>
+                    </div>
+                    <input class="form-input" id="w-address" placeholder="도로명 주소 직접 입력 가능" style="margin-bottom:6px">
+                    <input class="form-input" id="w-address-detail" placeholder="상세 주소 (동/호수 등 직접 입력)">
+                  </div>
+                </div>
+
+                <!-- ② 계좌정보 -->
+                <div id="wstep-2" style="display:none">
+                  <div class="form-grid-2">
+                    <div class="form-group">
+                      <label class="form-label">은행명</label>
+                      <select class="form-select" id="w-bank">
+                        <option value="">-- 은행 선택 --</option>
+                        <optgroup label="시중은행">
+                          <option>국민은행</option><option>신한은행</option><option>우리은행</option>
+                          <option>하나은행</option><option>농협은행</option><option>기업은행</option>
+                          <option>SC제일은행</option><option>씨티은행</option>
+                        </optgroup>
+                        <optgroup label="지방은행">
+                          <option>부산은행</option><option>대구은행</option><option>광주은행</option>
+                          <option>전북은행</option><option>경남은행</option>
+                        </optgroup>
+                        <optgroup label="인터넷은행">
+                          <option>카카오뱅크</option><option>케이뱅크</option><option>토스뱅크</option>
+                        </optgroup>
+                        <optgroup label="기타">
+                          <option>새마을금고</option><option>신협</option><option>우체국</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">예금주명</label>
+                      <input class="form-input" id="w-account-holder" placeholder="예금주 이름">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">계좌번호</label>
+                    <input class="form-input" id="w-account-number" placeholder="계좌번호 입력 (- 없이)" oninput="this.value=this.value.replace(/\D/g,'')">
+                  </div>
+                </div>
+
+                <!-- ③ 근무정보 -->
+                <div id="wstep-3" style="display:none">
                   <div class="form-grid-2">
                     <div class="form-group">
                       <label class="form-label required">직종</label>
@@ -2677,7 +2773,6 @@ window.cmsLogout=function(){
                       </select>
                     </div>
                   </div>
-
                   <!-- 고용형태 -->
                   <div class="form-group">
                     <label class="form-label required">고용형태</label>
@@ -2702,90 +2797,6 @@ window.cmsLogout=function(){
                       <input class="form-input" id="w-wage" placeholder="금액 입력" oninput="fmtComma(this)" style="font-variant-numeric:tabular-nums;background:#fff">
                     </div>
                   </div>
-                </div>
-
-                <!-- ② 신상정보 -->
-                <div id="wstep-2" style="display:none">
-                  <div class="form-grid-2">
-                    <div class="form-group">
-                      <label class="form-label required">내/외국인</label>
-                      <select class="form-select" id="w-nationality" onchange="toggleForeignFields()">
-                        <option value="domestic">내국인</option>
-                        <option value="foreign">외국인</option>
-                      </select>
-                    </div>
-                    <div class="form-group" id="w-stay-code-group" style="display:none">
-                      <label class="form-label">체류 코드</label>
-                      <select class="form-select" id="w-stay-code">
-                        <option value="">-- 선택 --</option>
-                        <option>E-7 (특정활동)</option>
-                        <option>E-9 (비전문취업)</option>
-                        <option>H-2 (방문취업)</option>
-                        <option>F-4 (재외동포)</option>
-                        <option>F-5 (영주)</option>
-                        <option>F-6 (결혼이민)</option>
-                        <option>기타</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label required">주민등록번호</label>
-                    <div style="display:flex;gap:8px;align-items:center">
-                      <input class="form-input" id="w-id-front" placeholder="000000" maxlength="6" style="width:130px" oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===6)document.getElementById('w-id-back').focus()">
-                      <span style="color:var(--text3);font-weight:700">—</span>
-                      <input class="form-input" id="w-id-back" placeholder="●●●●●●●" maxlength="7" type="password" style="width:140px" oninput="this.value=this.value.replace(/\D/g,'')">
-                    </div>
-                    <div style="font-size:11px;color:var(--text3);margin-top:4px">※ 암호화 저장됩니다</div>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">주소</label>
-                    <div style="display:flex;gap:6px;margin-bottom:6px">
-                      <input class="form-input" id="w-zipcode" placeholder="우편번호 (선택)" style="width:130px">
-                      <button type="button" class="btn btn-secondary" style="white-space:nowrap;padding:8px 14px;font-size:12px" onclick="searchAddress()">🔍 주소 검색</button>
-                      <span style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap">※ 직접 입력도 가능</span>
-                    </div>
-                    <input class="form-input" id="w-address" placeholder="도로명 주소 직접 입력 가능" style="margin-bottom:6px">
-                    <input class="form-input" id="w-address-detail" placeholder="상세 주소 (동/호수 등 직접 입력)">
-                  </div>
-                </div>
-
-                <!-- ③ 계좌정보 -->
-                <div id="wstep-3" style="display:none">
-                  <div class="form-grid-2">
-                    <div class="form-group">
-                      <label class="form-label">은행명</label>
-                      <select class="form-select" id="w-bank">
-                        <option value="">-- 은행 선택 --</option>
-                        <optgroup label="시중은행">
-                          <option>국민은행</option><option>신한은행</option><option>우리은행</option>
-                          <option>하나은행</option><option>농협은행</option><option>기업은행</option>
-                          <option>SC제일은행</option><option>씨티은행</option>
-                        </optgroup>
-                        <optgroup label="지방은행">
-                          <option>부산은행</option><option>대구은행</option><option>광주은행</option>
-                          <option>전북은행</option><option>경남은행</option>
-                        </optgroup>
-                        <optgroup label="인터넷은행">
-                          <option>카카오뱅크</option><option>케이뱅크</option><option>토스뱅크</option>
-                        </optgroup>
-                        <optgroup label="기타">
-                          <option>새마을금고</option><option>신협</option><option>우체국</option>
-                        </optgroup>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">예금주명</label>
-                      <input class="form-input" id="w-account-holder" placeholder="예금주 이름">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">계좌번호</label>
-                    <input class="form-input" id="w-account-number" placeholder="계좌번호 입력 (- 없이)" oninput="this.value=this.value.replace(/\D/g,'')">
-                  </div>
-                </div>
-
-                <!-- ④ 근무정보 -->
-                <div id="wstep-4" style="display:none">
                   <div class="form-grid-2">
                     <div class="form-group">
                       <label class="form-label required">입사일</label>
@@ -3550,7 +3561,12 @@ window.cmsLogout=function(){
       <!-- 청구월 선택 -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
         <label style="font-size:13px;font-weight:700">청구월</label>
-        <input type="month" class="form-input" id="fund-month" style="width:180px;padding:7px 12px" onchange="renderFund()">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="moveFundMonth(-1)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:15px">‹</button>
+          <span id="fund-month-label" style="font-size:15px;font-weight:800;min-width:120px;text-align:center"></span>
+          <button onclick="moveFundMonth(1)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:15px">›</button>
+        </div>
+        <input type="hidden" id="fund-month">
       </div>
 
       <!-- 탭 -->
@@ -3748,6 +3764,104 @@ window.cmsLogout=function(){
       </div>
     </div>
 
+    <!-- ===== 조직관리 ===== -->
+    <div class="page" id="page-org">
+      <div class="page-header">
+        <div>
+          <div class="page-title">조직관리</div>
+          <div class="page-subtitle">본사 조직도 · 계정관리 · 권한설정</div>
+        </div>
+      </div>
+
+      <!-- 탭 -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'org-tab','org-tab-chart');renderOrgChart()">🏢 본사 조직도</div>
+        <div class="tab" onclick="switchTab(this,'org-tab','org-tab-sites');renderOrgSites()">🏗 현장 조직도</div>
+        <div class="tab" onclick="switchTab(this,'org-tab','org-tab-accounts');renderOrgAccounts()">👤 계정관리</div>
+        <div class="tab" onclick="switchTab(this,'org-tab','org-tab-permissions');renderOrgPermissions()">🔐 권한설정</div>
+      </div>
+
+      <div id="org-tab">
+
+        <!-- 탭1: 조직도 -->
+        <div id="org-tab-chart">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">본사 조직도</div>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" id="org-edit-btn" onclick="toggleOrgEdit()">✏️ 편집</button>
+            </div>
+            <div style="padding:20px;overflow-x:auto" id="org-chart-container">
+              <!-- 조직도 렌더링 -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 탭2: 현장 조직도 -->
+        <div id="org-tab-sites" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">PM별 현장 현황</div>
+            </div>
+            <div id="org-sites-container" style="padding:16px"></div>
+          </div>
+        </div>
+
+        <!-- 탭3: 계정관리 -->
+        <div id="org-tab-accounts" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">시스템 계정 관리</div>
+              <button class="btn btn-primary" style="padding:6px 12px;font-size:12px" onclick="openAddAccountModal()">+ 계정 추가</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table">
+                <thead>
+                  <tr style="background:var(--surface2)">
+                    <th style="min-width:80px">아이디</th>
+                    <th style="min-width:80px">이름</th>
+                    <th style="min-width:80px">역할</th>
+                    <th style="min-width:100px">소속</th>
+                    <th style="min-width:80px">담당현장</th>
+                    <th style="min-width:60px">상태</th>
+                    <th style="width:100px"></th>
+                  </tr>
+                </thead>
+                <tbody id="org-accounts-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 탭3: 권한설정 -->
+        <div id="org-tab-permissions" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">역할별 메뉴 권한</div>
+              <button class="btn btn-primary" style="padding:6px 12px;font-size:12px" onclick="saveOrgPermissions()">💾 저장</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table table-grid" style="font-size:12px">
+                <thead>
+                  <tr style="background:var(--surface2)">
+                    <th style="min-width:140px">메뉴</th>
+                    <th style="text-align:center;min-width:70px">대표/전무</th>
+                    <th style="text-align:center;min-width:70px">부사장</th>
+                    <th style="text-align:center;min-width:70px">PM</th>
+                    <th style="text-align:center;min-width:70px">본사팀</th>
+                    <th style="text-align:center;min-width:70px">현장소장</th>
+                    <th style="text-align:center;min-width:70px">현장공무</th>
+                  </tr>
+                </thead>
+                <tbody id="org-perms-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /content -->
 </main>
 <div id="mtabbar">
@@ -3781,7 +3895,8 @@ window.cmsLogout=function(){
       expense: '경비관리',
       meal: '식수관리',
       fund: '자금청구',
-      cost: '원가/정산보고서'
+      cost: '원가/정산보고서',
+      org: '조직관리'
     };
     document.getElementById('topbar-title').textContent = titles[pageId] || pageId;
     if(pageId === 'expense' && typeof expRender === 'function') expRender();
@@ -3790,11 +3905,17 @@ window.cmsLogout=function(){
       currentProjectId = null;
       document.getElementById('pj-list-view').style.display = '';
       document.getElementById('pj-detail-view').style.display = 'none';
+      pjTabMode = 'active';
+      document.getElementById('pj-tab-active').className = 'tab active';
+      document.getElementById('pj-tab-completed').className = 'tab';
+      var yfw = document.getElementById('pj-year-filter-wrap');
+      if (yfw) yfw.style.display = 'none';
       renderProjectList();
     }
     if(pageId === 'staff') { renderStaffList(); }
     if(pageId === 'payroll') { initPayroll(); }
     if(pageId === 'fund') { initFund(); }
+    if(pageId === 'org') { initOrg(); }
   }
 
   function switchTab(el, containerId, targetId) {
@@ -5387,9 +5508,136 @@ window.cmsLogout=function(){
       localStorage.setItem(siteKey('cm_teams'), JSON.stringify(teams));
     } catch(e) { console.warn('저장 실패:', e); }
   }
+
+  /* ===== 마스터 DB (전사 근로자 풀) ===== */
+  function getMasterWorkers() {
+    try { return JSON.parse(localStorage.getItem('cm_workers_master') || '[]'); } catch(e) { return []; }
+  }
+  function saveMasterWorkers(list) {
+    localStorage.setItem('cm_workers_master', JSON.stringify(list));
+  }
+
+  // 마스터에 등록/업데이트 (주민번호 앞자리+이름으로 매칭)
+  function upsertMaster(w) {
+    var master = getMasterWorkers();
+    var key = (w.name || '') + '_' + (w.idFront || '');
+    var idx = master.findIndex(function(m) { return (m.name||'') + '_' + (m.idFront||'') === key; });
+    var masterEntry = {
+      name: w.name, phone: w.phone, job: w.job, gongjong: w.gongjong || '',
+      empType: w.empType, nationality: w.nationality || 'domestic',
+      stayCode: w.stayCode || '', idFront: w.idFront || '', idBack: w.idBack || '',
+      zipcode: w.zipcode || '', address: w.address || '', addressDetail: w.addressDetail || '',
+      bank: w.bank || '', accountHolder: w.accountHolder || '', accountNumber: w.accountNumber || '',
+      photo: w.photo || '', lodging: w.lodging || false,
+      history: w.history || [],
+      lastSiteId: activeSiteId || '',
+      updatedAt: new Date().toISOString().slice(0,10)
+    };
+    if (idx >= 0) {
+      // 기존 이력 보존하면서 업데이트
+      var existing = master[idx];
+      masterEntry.history = existing.history || [];
+      if (w.history && w.history.length > (existing.history||[]).length) masterEntry.history = w.history;
+      masterEntry.registeredAt = existing.registeredAt || masterEntry.updatedAt;
+      master[idx] = masterEntry;
+    } else {
+      masterEntry.registeredAt = masterEntry.updatedAt;
+      master.push(masterEntry);
+    }
+    saveMasterWorkers(master);
+  }
+
+  // 기존 현장 데이터 → 마스터 마이그레이션 (1회)
+  function migrateSiteWorkersToMaster() {
+    if (localStorage.getItem('cm_master_migrated') === 'Y') return;
+    var pjList = JSON.parse(localStorage.getItem('cm_projects') || '[]');
+    pjList.forEach(function(pj) {
+      var siteWorkers = JSON.parse(localStorage.getItem('cm_workers_' + pj.id) || '[]');
+      siteWorkers.forEach(function(w) { if (w.name) upsertMaster(w); });
+    });
+    localStorage.setItem('cm_master_migrated', 'Y');
+  }
+  migrateSiteWorkersToMaster();
   /* ===== 근로자 관리 ===== */
   const workers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
   let editingWorkerIdx = null;
+
+  // 주민번호 앞자리 입력 시 마스터 DB 매칭 (이름 + 생년월일)
+  function searchMasterByIdFront() {
+    var box = document.getElementById('w-master-match-id');
+    if (!box) return;
+    if (editingWorkerIdx !== null) { box.style.display = 'none'; return; }
+
+    var name = (document.getElementById('w-name')?.value || '').trim();
+    var idFront = (document.getElementById('w-id-front')?.value || '').trim();
+    if (!name || idFront.length < 6) { box.style.display = 'none'; return; }
+
+    var master = getMasterWorkers();
+    var matches = master.filter(function(m) {
+      return m.name === name && m.idFront === idFront;
+    });
+
+    if (!matches.length) { box.style.display = 'none'; return; }
+
+    box.style.display = '';
+    box.innerHTML = matches.map(function(m, i) {
+      var historyCount = (m.history || []).length;
+      var lastSite = '';
+      if (m.lastSiteId) {
+        var pj = getProjectList().find(function(p) { return p.id === m.lastSiteId; });
+        lastSite = pj ? pj.name : '';
+      }
+      return '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;margin-bottom:4px">'
+        + '<div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:4px">📋 기존 등록 인원 발견 (이름 + 생년월일 일치)</div>'
+        + '<div style="font-size:12px;margin-bottom:2px"><b>' + m.name + '</b> · ' + (m.job || '-') + ' · ' + (m.phone || '-') + '</div>'
+        + '<div style="font-size:11px;color:var(--text3)">'
+        + (lastSite ? '최근 현장: ' + lastSite : '')
+        + (historyCount ? ' · 이력 ' + historyCount + '건' : '')
+        + '</div>'
+        + '<button onclick="applyMasterData(' + i + ')" style="margin-top:8px;padding:5px 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer">기존 정보로 불러오기</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  window.applyMasterData = function(matchIdx) {
+    var master = getMasterWorkers();
+    var name = (document.getElementById('w-name')?.value || '').trim();
+    var idFront = (document.getElementById('w-id-front')?.value || '').trim();
+    var matches = master.filter(function(m) { return m.name === name && m.idFront === idFront; });
+    var m = matches[matchIdx];
+    if (!m) return;
+
+    // 폼에 기존 정보 채우기
+    document.getElementById('w-phone').value = m.phone || '';
+    document.getElementById('w-id-back').value = m.idBack || '';
+    document.getElementById('w-zipcode').value = m.zipcode || '';
+    document.getElementById('w-address').value = m.address || '';
+    document.getElementById('w-address-detail').value = m.addressDetail || '';
+    document.getElementById('w-bank').value = m.bank || '';
+    document.getElementById('w-account-holder').value = m.accountHolder || '';
+    document.getElementById('w-account-number').value = m.accountNumber || '';
+    document.getElementById('w-join-date').value = new Date().toISOString().slice(0, 10);
+
+    // Step 1 정보도 채우기
+    if (m.nationality) document.getElementById('w-nationality').value = m.nationality;
+    if (m.stayCode) document.getElementById('w-stay-code').value = m.stayCode;
+    if (m.job) document.getElementById('w-job').value = m.job;
+    if (m.empType) {
+      var radio = document.getElementById('emp-' + m.empType);
+      if (radio) { radio.checked = true; onEmpTypeChange(m.empType); }
+    }
+
+    // 매칭 표시 업데이트
+    var box = document.getElementById('w-master-match-id');
+    if (box) {
+      box.innerHTML = '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px">'
+        + '<div style="font-size:12px;font-weight:700;color:#16a34a">✅ 기존 정보 불러옴</div>'
+        + '<div style="font-size:11px;color:var(--text3);margin-top:2px">신상정보·계좌정보가 자동 입력되었습니다. 임금과 공종을 확인해주세요.</div>'
+        + '</div>';
+    }
+
+    showToast('✅ ' + m.name + ' 기존 정보 불러옴! 임금/공종을 확인해주세요', 'success');
+  }
 
   // 프로필 사진 미리보기
   window.previewWorkerPhoto=function(input){
@@ -5429,7 +5677,7 @@ window.cmsLogout=function(){
       panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     currentWorkerStep = 1;
-    [1,2,3,4].forEach(i => workerStepDone[i] = (idx !== null)); // 수정시 모두 완료
+    [1,2,3].forEach(i => workerStepDone[i] = (idx !== null)); // 수정시 모두 완료
     switchWorkerStep(1, true);
     if (idx !== null) {
       title.textContent = '근로자 수정';
@@ -5475,7 +5723,7 @@ window.cmsLogout=function(){
       toggleForeignFields();
       // 스텝 초기화
       currentWorkerStep = 1;
-      [1,2,3,4].forEach(i => workerStepDone[i] = false);
+      [1,2,3].forEach(i => workerStepDone[i] = false);
       switchWorkerStep(1, true);
       // 공종 초기화
       onJobChange();
@@ -5497,67 +5745,57 @@ window.cmsLogout=function(){
   }
 
   let currentWorkerStep = 1;
-  const workerStepDone = { 1: false, 2: false, 3: false, 4: false };
+  const workerStepDone = { 1: false, 2: false, 3: false };
 
   function switchWorkerStep(n, skipValidate = false) {
-    // 앞 단계 건너뛰기 방지 (완료된 단계만 클릭 가능)
     if (n > 1 && !workerStepDone[n-1] && !skipValidate) {
       showToast(`${n-1}단계를 먼저 완료해 주세요.`, 'error');
       return;
     }
     currentWorkerStep = n;
-    [1,2,3,4].forEach(i => {
-      document.getElementById('wstep-'+i).style.display = i === n ? 'block' : 'none';
+    [1,2,3].forEach(i => {
+      var el = document.getElementById('wstep-'+i);
+      if (el) el.style.display = i === n ? 'block' : 'none';
       const node = document.getElementById('snode-'+i);
       if (!node) return;
       node.className = 'step-node' + (i === n ? ' active' : (workerStepDone[i] ? ' done' : ''));
-      if (i < 4) {
+      if (i < 3) {
         const line = document.getElementById('sline-'+i);
         if (line) line.className = 'step-line' + (workerStepDone[i] ? ' done' : '');
       }
     });
-    // 버튼 표시
     const btnPrev = document.getElementById('w-btn-prev');
     const btnNext = document.getElementById('w-btn-next');
     const btnSave = document.getElementById('w-btn-save');
     if (btnPrev) btnPrev.style.display = n > 1 ? 'block' : 'none';
-    if (btnNext) btnNext.style.display = n < 4 ? 'block' : 'none';
-    if (btnSave) btnSave.style.display = n === 4 ? 'block' : 'none';
+    if (btnNext) btnNext.style.display = n < 3 ? 'block' : 'none';
+    if (btnSave) btnSave.style.display = n === 3 ? 'block' : 'none';
   }
 
   function validateWorkerStep(n) {
     if (n === 1) {
-      const name     = document.getElementById('w-name').value.trim();
-      const phone    = document.getElementById('w-phone').value.trim();
-      const job      = document.getElementById('w-job').value;
-      const gongjong = document.getElementById('w-gongjong')?.value || '';
-      const empType  = document.querySelector('input[name="w-emp-type"]:checked')?.value || '';
-      const wage     = document.getElementById('w-wage').value.trim();
-      if (!name)     { showToast('이름을 입력해 주세요.', 'error'); return false; }
-      if (!phone)    { showToast('연락처를 입력해 주세요.', 'error'); return false; }
-      if (!job)      { showToast('직종을 선택해 주세요.', 'error'); return false; }
-      if (!gongjong) { showToast('작업 공종을 선택해 주세요.', 'error'); return false; }
-      if (!empType)  { showToast('고용형태를 선택해 주세요.', 'error'); return false; }
-      if (!wage)     { showToast('급여를 입력해 주세요.', 'error'); return false; }
+      const name = document.getElementById('w-name').value.trim();
+      const phone = document.getElementById('w-phone').value.trim();
+      const idFront = document.getElementById('w-id-front').value.trim();
+      const idBack = document.getElementById('w-id-back').value.trim();
+      if (!name) { showToast('이름을 입력해 주세요.', 'error'); return false; }
+      if (!phone) { showToast('연락처를 입력해 주세요.', 'error'); return false; }
+      if (!idFront || idFront.length !== 6) { showToast('주민등록번호 앞자리 6자리를 입력해 주세요.', 'error'); return false; }
+      if (!idBack || idBack.length !== 7) { showToast('주민등록번호 뒷자리 7자리를 입력해 주세요.', 'error'); return false; }
     }
     if (n === 2) {
-      const idFront = document.getElementById('w-id-front').value.trim();
-      const idBack  = document.getElementById('w-id-back').value.trim();
-      const addr    = document.getElementById('w-address').value.trim();
-      if (!idFront || idFront.length !== 6) { showToast('주민등록번호 앞자리 6자리를 입력해 주세요.', 'error'); return false; }
-      if (!idBack  || idBack.length  !== 7) { showToast('주민등록번호 뒷자리 7자리를 입력해 주세요.', 'error'); return false; }
-      if (!addr) { showToast('주소를 입력해 주세요.', 'error'); return false; }
+      // 계좌정보는 선택사항이므로 검증 없음
     }
     if (n === 3) {
-      const bank   = document.getElementById('w-bank').value;
-      const holder = document.getElementById('w-account-holder').value.trim();
-      const accNum = document.getElementById('w-account-number').value.trim();
-      if (!bank)   { showToast('은행을 선택해 주세요.', 'error'); return false; }
-      if (!holder) { showToast('예금주명을 입력해 주세요.', 'error'); return false; }
-      if (!accNum) { showToast('계좌번호를 입력해 주세요.', 'error'); return false; }
-    }
-    if (n === 4) {
+      const job = document.getElementById('w-job').value;
+      const gongjong = document.getElementById('w-gongjong')?.value || '';
+      const empType = document.querySelector('input[name="w-emp-type"]:checked')?.value || '';
+      const wage = document.getElementById('w-wage').value.trim();
       const joinDate = document.getElementById('w-join-date').value;
+      if (!job) { showToast('직종을 선택해 주세요.', 'error'); return false; }
+      if (!gongjong) { showToast('작업 공종을 선택해 주세요.', 'error'); return false; }
+      if (!empType) { showToast('고용형태를 선택해 주세요.', 'error'); return false; }
+      if (!wage) { showToast('급여를 입력해 주세요.', 'error'); return false; }
       if (!joinDate) { showToast('입사일을 선택해 주세요.', 'error'); return false; }
     }
     return true;
@@ -5586,7 +5824,7 @@ window.cmsLogout=function(){
     const empType  = document.querySelector('input[name="w-emp-type"]:checked')?.value || '';
     const wage     = Number(document.getElementById('w-wage').value.replace(/,/g,'')) || 0;
 
-    // 4단계 최종 검사 (입사일)
+    // 3단계 최종 검사 (입사일)
     if (!document.getElementById('w-join-date').value) {
       showToast('입사일을 선택해 주세요.', 'error'); return;
     }
@@ -5618,6 +5856,7 @@ window.cmsLogout=function(){
       showToast(`✓ "${name}" 근로자가 등록되었습니다!`, 'success');
     }
     saveToStorage();
+    upsertMaster(w); // 마스터 DB에도 동기화
     renderWorkerList();
     closeWorkerForm();
   }
@@ -5774,7 +6013,8 @@ window.cmsLogout=function(){
         : `<span class="badge badge-blue">내국인</span>`;
       const wage = w.wage ? Number(w.wage).toLocaleString()+'원' : '-';
       const empLabel = w.empType === 'monthly' ? '💼 월급' : '🔨 일당';
-      return `<tr>
+      const detailId = 'wd-' + realIdx;
+      return `<tr onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'':'none'" style="cursor:pointer">
         <td style="font-weight:700"><div style="display:flex;align-items:center;gap:8px"><img src="${w.photo||gDummyPhoto(w.name)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"><span>${w.name}</span></div></td>
         <td style="font-size:12px">${displayJob(w)}${w.job==='실행예산팀'?'<br><span style="color:var(--text3);font-size:10px">실행예산팀</span>':w.gongjong?'<br><span style="color:var(--text3);font-size:10px">'+w.gongjong+'</span>':''}</td>
         <td>
@@ -5786,13 +6026,67 @@ window.cmsLogout=function(){
         <td style="font-size:12px">${w.joinDate || '-'}</td>
         <td>${isLeave
           ? `<span class="badge" style="background:#fee2e2;color:var(--danger);font-size:10px">퇴사 ${w.leaveDate}</span>`
-          : `<span class="badge badge-green" style="font-size:10px">재직중</span>`}</td>
-        <td style="white-space:nowrap">
+          : `<span class="badge badge-green" style="font-size:10px">재직중</span>`}${w.history && w.history.length ? `<div style="font-size:10px;color:var(--accent);margin-top:2px">이력 ${w.history.length}건</div>` : ''}</td>
+        <td style="white-space:nowrap" onclick="event.stopPropagation()">
           <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openWorkerForm(${realIdx})">수정</button>
           ${!(w.leaveDate && w.leaveDate.length > 4)
             ? `<button class="btn" style="padding:3px 8px;font-size:11px;background:#fee2e2;color:var(--danger);border:1px solid #fca5a5;border-radius:6px;cursor:pointer" onclick="openLeaveModal(${realIdx})">퇴직</button>`
             : `<button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;color:var(--text3)" onclick="cancelLeave(${realIdx})">복직</button>`
           }
+        </td>
+      </tr>
+      <tr id="${detailId}" style="display:none">
+        <td colspan="8" style="padding:0">
+          <div style="background:#f8fafc;padding:14px 20px;border-top:1px dashed var(--border)">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:12px">
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">주민등록번호</div>
+                <div>${w.idFront || '-'}  -  ${'●'.repeat(7)}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">국적</div>
+                <div>${w.nationality === 'foreign' ? '외국인' + (w.stayCode ? ' · ' + w.stayCode : '') : '내국인'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">연락처</div>
+                <div>${w.phone || '-'}</div>
+              </div>
+              <div style="grid-column:span 2">
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">주소</div>
+                <div>${w.address || '-'} ${w.addressDetail || ''}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">우편번호</div>
+                <div>${w.zipcode || '-'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">은행</div>
+                <div>${w.bank || '-'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">예금주</div>
+                <div>${w.accountHolder || '-'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">계좌번호</div>
+                <div>${w.accountNumber || '-'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">입사일</div>
+                <div>${w.joinDate || '-'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">퇴사일</div>
+                <div>${w.leaveDate || '재직중'}</div>
+              </div>
+              <div>
+                <div style="font-weight:700;color:var(--text3);font-size:10px;margin-bottom:3px">숙식</div>
+                <div>${w.lodging ? '✅ 숙식자' : '-'}</div>
+              </div>
+            </div>
+            ${w.history && w.history.length ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-weight:700;font-size:10px;color:var(--text3);margin-bottom:4px">퇴직/복직 이력</div>' + w.history.map(function(h){return '<div style="font-size:11px;display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(h.type==='퇴직'?'var(--danger)':'var(--accent)')+'"></span><b>'+h.type+'</b> '+h.date+(h.reason?' · '+h.reason:'')+'</div>';}).join('') + '</div>' : ''}
+            ${w.note ? '<div style="margin-top:8px;font-size:11px;color:var(--text3)">📝 ' + w.note + '</div>' : ''}
+          </div>
         </td>
       </tr>`;
     }).join('');
@@ -5838,9 +6132,13 @@ window.cmsLogout=function(){
     var w = workers[leaveTargetIdx];
     if (!w) { showToast('근로자 정보를 찾을 수 없습니다', 'error'); return; }
     var wName = w.name;
+    // 이력 추가
+    if (!w.history) w.history = [];
+    w.history.push({ type: '퇴직', date: date, reason: document.getElementById('leave-reason').value, at: new Date().toISOString().slice(0,10) });
     w.leaveDate = date;
     w.leaveReason = document.getElementById('leave-reason').value;
     localStorage.setItem(siteKey('cm_workers'), JSON.stringify(workers));
+    upsertMaster(w); // 마스터에 퇴직 이력 동기화
     closeLeaveModal();
     renderWorkerList();
     showToast('🚪 ' + wName + ' 퇴직처리 완료', 'success');
@@ -5850,7 +6148,14 @@ window.cmsLogout=function(){
     var w = workers[idx];
     if (!w) { showToast('근로자 정보를 찾을 수 없습니다', 'error'); return; }
     document.getElementById('rejoin-worker-name').textContent = w.name + ' (' + (w.job||'') + ')';
-    document.getElementById('rejoin-history').textContent = '퇴사일: ' + (w.leaveDate||'-') + ' / 사유: ' + (w.leaveReason||'-');
+    // 이력 표시
+    var historyText = '퇴사일: ' + (w.leaveDate||'-') + ' / 사유: ' + (w.leaveReason||'-');
+    if (w.history && w.history.length) {
+      historyText = w.history.map(function(h, i) {
+        return (i+1) + '. ' + h.type + ' ' + h.date + (h.reason ? ' (' + h.reason + ')' : '');
+      }).join(' → ');
+    }
+    document.getElementById('rejoin-history').textContent = historyText;
     document.getElementById('rejoin-date').value = '';
     document.getElementById('rejoin-panel').style.display = '';
     document.getElementById('rejoin-panel').scrollIntoView({behavior:'smooth'});
@@ -5866,11 +6171,17 @@ window.cmsLogout=function(){
     if (idx === undefined || idx < 0) return;
     var w = workers[idx];
     if (!w) { showToast('근로자 정보를 찾을 수 없습니다', 'error'); return; }
+    var rejoinDate = document.getElementById('rejoin-date').value;
+    if (!rejoinDate) { showToast('복직일자를 선택해주세요', 'error'); return; }
     var wName = w.name;
+    // 이력 추가
+    if (!w.history) w.history = [];
+    w.history.push({ type: '복직', date: rejoinDate, at: new Date().toISOString().slice(0,10) });
     w.leaveDate = '';
     w.leaveReason = '';
-    w.rejoinDate = document.getElementById('rejoin-date').value;
+    w.rejoinDate = rejoinDate;
     localStorage.setItem(siteKey('cm_workers'), JSON.stringify(workers));
+    upsertMaster(w); // 마스터에 복직 이력 동기화
     closeRejoinPanel();
     renderWorkerList();
     showToast('🔄 ' + wName + ' 복직처리 완료', 'success');
@@ -7795,7 +8106,7 @@ window.cmsLogout=function(){
     if (empty) empty.style.display = 'none';
 
     if (!showList.length) {
-      tbody.innerHTML = '<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">' + (isComp ? '준공 처리된 현장이 없습니다.' : '진행 중인 현장이 없습니다.') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="padding:24px;text-align:center;color:var(--text3)">' + (isComp ? '준공 처리된 현장이 없습니다.' : '진행 중인 현장이 없습니다.') + '</td></tr>';
       return;
     }
 
@@ -7813,7 +8124,7 @@ window.cmsLogout=function(){
       var years = Object.keys(byYear).sort().reverse();
       var html = '';
       years.forEach(function(yr) {
-        html += '<tr><td colspan="10" style="padding:8px 12px;background:#f5f5f5;font-weight:800;font-size:12px;color:var(--text2);border-bottom:1px solid #e0e0e0">' + yr + '년 (' + byYear[yr].length + '건)</td></tr>';
+        html += '<tr><td colspan="11" style="padding:8px 12px;background:#f5f5f5;font-weight:800;font-size:12px;color:var(--text2);border-bottom:1px solid #e0e0e0">' + yr + '년 (' + byYear[yr].length + '건)</td></tr>';
         byYear[yr].forEach(function(pj, i) { html += buildPjRow(pj, i + 1, true, isAdmin, today, fmtAmt); });
       });
       tbody.innerHTML = html;
@@ -7830,6 +8141,13 @@ window.cmsLogout=function(){
       PJ_INPUT_KEYS.forEach(function(k) { total += (pivot.cells[k + '_' + ci] || 0); });
     });
     var contractor = data['pj-contractor'] || '-';
+    var pmName = data['pj-pm'] || '-';
+    var pmLabel = pmName;
+    try {
+      var orgRaw = JSON.parse(localStorage.getItem('cm_org_data') || '{}');
+      var pmObj = (orgRaw.pms||[]).find(function(p){return p.name===pmName;});
+      if (pmObj) pmLabel = pmObj.region;
+    } catch(e) {}
     var assigned = data.assignedStaff || [];
     var assignedManager = assigned.filter(function(a){return (a.job||'').indexOf('소장')>=0;}).map(function(a){return a.name;}).join(', ');
     var assignedAdmin = assigned.filter(function(a){return (a.job||'').indexOf('공무')>=0;}).map(function(a){return a.name;}).join(', ');
@@ -7852,6 +8170,7 @@ window.cmsLogout=function(){
       + '<td style="text-align:center;color:var(--text3);font-size:11px">' + num + '</td>'
       + '<td style="font-size:12px;color:var(--text2)">' + contractor + '</td>'
       + '<td style="font-weight:600;font-size:13px">' + (pj.name || '(이름 없음)') + '</td>'
+      + '<td style="text-align:center;font-size:11px;color:var(--accent)">' + pmLabel + '</td>'
       + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + manager + '</td>'
       + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + admin + '</td>'
       + '<td style="text-align:right;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums">' + fmtAmt(total) + '</td>'
@@ -7866,13 +8185,20 @@ window.cmsLogout=function(){
 
   function openAddProjectModal() {
     document.getElementById('pj-add-modal')?.remove();
+    var org = getOrgData();
+    var pmOpts = '<option value="">-- PM팀 선택 --</option>';
+    (org.pms || []).forEach(function(pm) {
+      pmOpts += '<option value="' + pm.name + '">' + pm.region + ' (' + pm.name + ' ' + pm.rank + ')</option>';
+    });
     var overlay = document.createElement('div');
     overlay.id = 'pj-add-modal';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'
+    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'
       + '<div style="font-size:16px;font-weight:800;margin-bottom:16px">🏗 현장 추가</div>'
       + '<div style="margin-bottom:14px"><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">공사명 (프로젝트명)</label>'
       + '<input id="pj-new-name" class="form-input" placeholder="예: ○○ 복합개발 전기공사 1공구" style="width:100%;padding:8px;font-size:13px"></div>'
+      + '<div style="margin-bottom:14px"><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">담당 PM팀</label>'
+      + '<select id="pj-new-pm" class="form-select" style="width:100%;padding:8px;font-size:13px">' + pmOpts + '</select></div>'
       + '<div style="display:flex;gap:8px;justify-content:flex-end">'
       + '<button onclick="document.getElementById(\'pj-add-modal\').remove()" style="padding:8px 18px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
       + '<button onclick="confirmAddProject()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">추가</button>'
@@ -7884,13 +8210,14 @@ window.cmsLogout=function(){
 
   function confirmAddProject() {
     var name = document.getElementById('pj-new-name')?.value?.trim();
+    var pm = document.getElementById('pj-new-pm')?.value || '';
     if (!name) { showToast('공사명을 입력해주세요', 'error'); return; }
     var id = 'pj_' + Date.now();
     var list = getProjectList();
     list.push({ id: id, name: name });
     saveProjectList(list);
-    // 초기 데이터
-    localStorage.setItem('cm_project_' + id, JSON.stringify({ 'pj-name': name }));
+    // 초기 데이터 (PM 포함)
+    localStorage.setItem('cm_project_' + id, JSON.stringify({ 'pj-name': name, 'pj-pm': pm }));
     document.getElementById('pj-add-modal').remove();
     renderProjectList();
     showToast('✅ ' + name + ' 현장이 추가되었습니다!', 'success');
@@ -8006,6 +8333,19 @@ window.cmsLogout=function(){
     renderProjectStaffTable();
     populateStaffAddSelect();
     populatePjStaffDatalist();
+    // PM select 채우기
+    var pmSel = document.getElementById('pj-pm');
+    if (pmSel) {
+      var org = getOrgData();
+      pmSel.innerHTML = '<option value="">-- PM 선택 --</option>';
+      (org.pms || []).forEach(function(pm) {
+        var opt = document.createElement('option');
+        opt.value = pm.name;
+        opt.textContent = pm.region + ' (' + pm.name + ' ' + pm.rank + ')';
+        pmSel.appendChild(opt);
+      });
+      if (saved['pj-pm']) pmSel.value = saved['pj-pm'];
+    }
   }
 
   /* ===== 프로젝트 현장 인력 배치 ===== */
@@ -8556,6 +8896,7 @@ window.cmsLogout=function(){
       var now = new Date();
       monthEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     }
+    updatePrMonthLabel();
     // 현장 select 채우기
     var siteSelect = document.getElementById('pr-site-select');
     if (siteSelect) {
@@ -8564,6 +8905,27 @@ window.cmsLogout=function(){
         return '<option value="' + pj.id + '">' + (pj.name || '(이름없음)') + '</option>';
       }).join('');
     }
+    renderPayroll();
+  }
+
+  function updatePrMonthLabel() {
+    var v = document.getElementById('pr-month')?.value || '';
+    var label = document.getElementById('pr-month-label');
+    if (label && v) {
+      label.textContent = v.substring(0, 4) + '년 ' + parseInt(v.substring(5)) + '월';
+    }
+  }
+
+  window.movePrMonth = function(delta) {
+    var el = document.getElementById('pr-month');
+    if (!el || !el.value) return;
+    var parts = el.value.split('-');
+    var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1;
+    m += delta;
+    if (m > 11) { m = 0; y++; }
+    if (m < 0) { m = 11; y--; }
+    el.value = y + '-' + String(m + 1).padStart(2, '0');
+    updatePrMonthLabel();
     renderPayroll();
   }
 
@@ -8863,7 +9225,7 @@ window.cmsLogout=function(){
 
   /* ===== 프로젝트 개요 ===== */
   const PJ_FIELDS = ['pj-name','pj-site-name','pj-usage','pj-address','pj-start-date','pj-end-date',
-    'pj-owner','pj-contractor','pj-owner-contact','pj-contractor-contact',
+    'pj-owner','pj-contractor','pj-owner-contact','pj-contractor-contact','pj-pm',
     'pj-site-manager','pj-site-admin',
     'pj-labor-ratio',
     'pj-gongjong','pj-dong-count','pj-underground','pj-above-ground','pj-unit-count','pj-area','pj-building-note'];
@@ -11847,6 +12209,28 @@ window.cmsLogout=function(){
       var now = new Date();
       monthEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     }
+    updateFundMonthLabel();
+    renderFund();
+  }
+
+  function updateFundMonthLabel() {
+    var v = document.getElementById('fund-month')?.value || '';
+    var label = document.getElementById('fund-month-label');
+    if (label && v) {
+      label.textContent = v.substring(0, 4) + '년 ' + parseInt(v.substring(5)) + '월';
+    }
+  }
+
+  window.moveFundMonth = function(delta) {
+    var el = document.getElementById('fund-month');
+    if (!el || !el.value) return;
+    var parts = el.value.split('-');
+    var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1;
+    m += delta;
+    if (m > 11) { m = 0; y++; }
+    if (m < 0) { m = 11; y--; }
+    el.value = y + '-' + String(m + 1).padStart(2, '0');
+    updateFundMonthLabel();
     renderFund();
   }
 
@@ -12474,6 +12858,361 @@ window.cmsLogout=function(){
     tbody.innerHTML = html;
   }
 
+  /* ===== 조직관리 ===== */
+  var DEFAULT_ORG_DATA = {
+    ceo: { name: '김홍수', title: '대표이사' },
+    coo: { name: '진행원', title: '경영총괄 전무' },
+    vp: { name: '이광훈', title: '부사장' },
+    audit: { name: '정완근 실장 / 김형철 고문', title: '감사실' },
+    safety: { name: '조동문 CSO / 김복수 상무', title: '안전보건실' },
+    departments: [
+      { name: '재무회계팀', head: '박경화 부장', parent: '경영지원실' },
+      { name: '외주구매팀', head: '김용원 부장', parent: '경영지원실' },
+      { name: '업무팀', head: '', parent: '경영지원실' },
+      { name: '공사관리팀', head: '김용감 상무', parent: '경영지원실' },
+      { name: '예산견적팀', head: '손병휘 차장', parent: '경영지원실' }
+    ],
+    pms: [
+      { name: '윤상영', rank: '부사장', region: '인천지역 본부총괄', sites: [] },
+      { name: '김장섭', rank: '전무', region: '관급', sites: [] },
+      { name: '최재필', rank: '전무', region: '1팀', sites: [] },
+      { name: '이요환', rank: '상무', region: '2팀', sites: [] },
+      { name: '신용한', rank: '상무', region: '3팀', sites: [] },
+      { name: '김철환', rank: '상무', region: '4팀', sites: [] },
+      { name: '김덕', rank: '부장', region: '5팀', sites: [] },
+      { name: '김순곤', rank: '상무', region: '플랜트팀', sites: [] }
+    ]
+  };
+
+  window.getOrgData = function() {
+    try {
+      var saved = JSON.parse(localStorage.getItem('cm_org_data') || 'null');
+      if (saved && saved._v === 4) return saved;
+      // 버전 없거나 구버전이면 기본값으로 리셋
+      DEFAULT_ORG_DATA._v = 4;
+      localStorage.removeItem('cm_org_data');
+      return DEFAULT_ORG_DATA;
+    } catch(e) { return DEFAULT_ORG_DATA; }
+  }
+  window.saveOrgData = function(d) { d._v = 4; localStorage.setItem('cm_org_data', JSON.stringify(d)); }
+
+  function getOrgAccounts() {
+    try { return JSON.parse(localStorage.getItem('cm_accounts') || '[]'); } catch(e) { return []; }
+  }
+  function saveOrgAccounts(list) { localStorage.setItem('cm_accounts', JSON.stringify(list)); }
+
+  function getOrgPerms() {
+    var defaults = {
+      'dashboard': { exec:true, vp:true, pm:true, hq:true, site_mgr:true, site_admin:true },
+      'project': { exec:true, vp:true, pm:true, hq:true, site_mgr:true, site_admin:true },
+      'execution': { exec:true, vp:true, pm:true, hq:true, site_mgr:true, site_admin:false },
+      'staff': { exec:true, vp:true, pm:false, hq:true, site_mgr:false, site_admin:false },
+      'payroll': { exec:true, vp:true, pm:false, hq:true, site_mgr:false, site_admin:false },
+      'materials': { exec:true, vp:true, pm:true, hq:false, site_mgr:true, site_admin:true },
+      'labor': { exec:true, vp:true, pm:true, hq:false, site_mgr:true, site_admin:true },
+      'expense': { exec:true, vp:true, pm:true, hq:false, site_mgr:true, site_admin:true },
+      'meal': { exec:true, vp:true, pm:true, hq:false, site_mgr:true, site_admin:true },
+      'fund': { exec:true, vp:true, pm:true, hq:true, site_mgr:true, site_admin:false },
+      'cost': { exec:true, vp:true, pm:true, hq:true, site_mgr:true, site_admin:false },
+      'org': { exec:true, vp:true, pm:false, hq:false, site_mgr:false, site_admin:false }
+    };
+    try { return JSON.parse(localStorage.getItem('cm_perms') || 'null') || defaults; } catch(e) { return defaults; }
+  }
+  function saveOrgPermsData(d) { localStorage.setItem('cm_perms', JSON.stringify(d)); }
+
+  window.initOrg = function() { renderOrgChart(); }
+
+  var orgEditMode = false;
+
+  window.toggleOrgEdit = function() {
+    orgEditMode = !orgEditMode;
+    var btn = document.getElementById('org-edit-btn');
+    if (btn) btn.textContent = orgEditMode ? '💾 저장' : '✏️ 편집';
+    if (!orgEditMode) {
+      // 저장
+      saveOrgFromForm();
+      showToast('✅ 조직도 저장 완료', 'success');
+    }
+    renderOrgChart();
+  }
+
+  function saveOrgFromForm() {
+    var org = getOrgData();
+    // 경영진
+    var ceoEl = document.getElementById('org-ed-ceo');
+    var cooEl = document.getElementById('org-ed-coo');
+    var vpEl = document.getElementById('org-ed-vp');
+    if (ceoEl) org.ceo.name = ceoEl.value;
+    if (cooEl) org.coo.name = cooEl.value;
+    if (vpEl) org.vp.name = vpEl.value;
+    // 부서
+    org.departments.forEach(function(d, i) {
+      var el = document.getElementById('org-ed-dept-' + i);
+      if (el) d.head = el.value;
+    });
+    // PM
+    org.pms.forEach(function(pm, i) {
+      var nEl = document.getElementById('org-ed-pm-n-' + i);
+      var rEl = document.getElementById('org-ed-pm-r-' + i);
+      if (nEl) pm.name = nEl.value;
+      if (rEl) pm.rank = rEl.value;
+    });
+    saveOrgData(org);
+  }
+
+  function editable(id, val) {
+    if (orgEditMode) return '<input id="' + id + '" value="' + (val||'') + '" style="border:1px solid var(--accent);border-radius:4px;padding:2px 6px;font-size:12px;text-align:center;width:100px;background:#fff">';
+    return '<span>' + (val||'-') + '</span>';
+  }
+
+  window.renderOrgChart = function() {
+    var org = getOrgData();
+    if (!org.teamMembers) {
+      org.teamMembers = {
+        '재무회계팀': ['김명식 차장','천이나 대리','이예은 사원','정은아 사원','──','🚗 신인성 실장'],
+        '외주구매팀': ['박진균 차장','강익종 과장','홍소민 대리','신영석 차장','주창오 과장'],
+        '업무팀': ['최영진 사원'],
+        '공사관리팀': ['이재용 부장','전용성 차장','김종현 대리','곽상우 대리','박성수 대리','고유빈 사원'],
+        '예산견적팀': ['강태원 차장','황순철 차장','정성윤 차장','김정남 사원','박승하 사원'],
+        '안전보건실': ['김복수 상무/팀장','권학상 상무','정상익 차장','엄재복 대리'],
+        '감사실': ['정완근 실장','김형철 고문']
+      };
+      saveOrgData(org);
+    }
+    var tm = org.teamMembers;
+    var container = document.getElementById('org-chart-container');
+    if (!container) return;
+    var E = orgEditMode;
+
+    function memberList(deptName) {
+      var members = tm[deptName] || [];
+      var h = '';
+      members.forEach(function(m, mi) {
+        if (m === '──') { h += '<div style="border-top:1px dashed #ddd;margin:3px 0"></div>'; return; }
+        h += '<div style="font-size:11px;color:var(--text2);padding:2px 0;display:flex;justify-content:space-between;align-items:center">';
+        h += '<span>' + m + '</span>';
+        if (E) h += '<span onclick="event.stopPropagation();removeOrgMember(\'' + deptName + '\',' + mi + ')" style="cursor:pointer;color:var(--danger);font-size:10px;padding:0 4px">✕</span>';
+        h += '</div>';
+      });
+      if (E) h += '<div style="margin-top:4px"><input id="org-add-' + deptName + '" placeholder="이름 직급" style="border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:10px;width:90px"><button onclick="addOrgMember(\'' + deptName + '\')" style="border:none;background:var(--accent);color:#fff;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;margin-left:4px">+</button></div>';
+      return h;
+    }
+
+    function deptCard(name, headId, headVal) {
+      var h = '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;min-width:140px;text-align:center">';
+      h += '<div style="font-weight:800;font-size:13px;padding-bottom:8px;border-bottom:2px solid var(--accent);margin-bottom:8px">' + name + '</div>';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px">' + editable(headId, headVal) + '</div>';
+      h += memberList(name);
+      h += '</div>';
+      return h;
+    }
+
+    function sideBox(title, topLine, members) {
+      var h = '<div style="background:#f5f5f5;border:1px solid var(--border);border-radius:10px;padding:14px 20px;min-width:160px;text-align:center">';
+      h += '<div style="font-weight:800;font-size:13px;margin-bottom:6px">' + title + '</div>';
+      if (topLine) h += '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">' + topLine + '</div>';
+      h += memberList(members);
+      h += '</div>';
+      return h;
+    }
+
+    var html = '';
+
+    // ═══ ROW 1: 감사실 ─── 대표이사 ─── 안전보건실 ═══
+    html += '<table style="margin:0 auto;border-collapse:collapse"><tr>';
+    html += '<td style="vertical-align:middle">' + sideBox('감사실', '', '감사실') + '</td>';
+    html += '<td style="vertical-align:middle"><div style="width:40px;height:2px;background:#bbb"></div></td>';
+    html += '<td style="text-align:center">';
+    html += '<div style="display:inline-block;background:#1a237e;color:#fff;padding:14px 40px;border-radius:10px;font-weight:800;font-size:16px">' + org.ceo.title + '</div>';
+    html += '<div style="font-size:15px;font-weight:700;margin-top:6px">' + editable('org-ed-ceo', org.ceo.name) + '</div>';
+    html += '</td>';
+    html += '<td style="vertical-align:middle"><div style="width:40px;height:2px;background:#bbb"></div></td>';
+    html += '<td style="vertical-align:middle">' + sideBox('안전보건실', '조동문 CSO', '안전보건실') + '</td>';
+    html += '</tr></table>';
+
+    // ═══ 세로선 ═══
+    html += '<div style="width:2px;height:24px;background:#bbb;margin:0 auto"></div>';
+
+    // ═══ ROW 2: 경영총괄 전무 ═══
+    html += '<div style="text-align:center">';
+    html += '<div style="display:inline-block;background:#37474f;color:#fff;padding:12px 32px;border-radius:10px;font-weight:700;font-size:14px">' + org.coo.title + '</div>';
+    html += '<div style="font-size:14px;font-weight:600;margin-top:6px">' + editable('org-ed-coo', org.coo.name) + '</div>';
+    html += '</div>';
+
+    // ═══ 세로선 → 분기 ═══
+    html += '<div style="width:2px;height:24px;background:#bbb;margin:0 auto"></div>';
+
+    // ═══ ROW 3: 경영지원실 | 영업/PM ═══
+    html += '<div style="max-width:1100px;margin:0 auto">';
+    // 가로선: flex 3:2 비율이므로 왼쪽 중앙=30%, 오른쪽 중앙=80%
+    html += '<div style="margin-left:30%;margin-right:20%;height:2px;background:#bbb"></div>';
+    // 양쪽 블록
+    html += '<div style="display:flex">';
+
+    // 경영지원실 (왼쪽 60%)
+    html += '<div style="flex:3;display:flex;flex-direction:column;align-items:center">';
+    html += '<div style="width:2px;height:20px;background:#bbb"></div>';
+    html += '<div style="background:var(--accent);color:#fff;padding:12px 28px;border-radius:10px;font-weight:800;font-size:14px">경영지원실</div>';
+    html += '<div style="font-size:14px;font-weight:600;margin:6px 0 16px">' + editable('org-ed-vp', org.vp.name) + ' ' + org.vp.title + '</div>';
+    var mgmtDepts = org.departments.filter(function(d){return d.parent==="경영지원실";});
+    html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:0 8px">';
+    mgmtDepts.forEach(function(d) {
+      var idx = org.departments.indexOf(d);
+      html += deptCard(d.name, 'org-ed-dept-' + idx, d.head);
+    });
+    html += '</div></div>';
+
+    // 영업/PM (오른쪽 40%)
+    html += '<div style="flex:2;display:flex;flex-direction:column;align-items:center">';
+    html += '<div style="width:2px;height:20px;background:#bbb"></div>';
+    html += '<div style="background:#0d47a1;color:#fff;padding:12px 28px;border-radius:10px;font-weight:800;font-size:14px">영업 / PM</div>';
+    html += '<div style="font-size:12px;color:var(--text3);margin:6px 0 16px">현장 담당</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px;width:250px">';
+    var pjList = getProjectList();
+    org.pms.forEach(function(pm, i) {
+      var pmSites = pjList.filter(function(pj) {
+        var pjData = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
+        return pjData['pj-pm'] === pm.name;
+      });
+      var siteCount = pmSites.length;
+      html += '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">';
+      html += '<div style="text-align:left"><div style="font-weight:800;font-size:13px">' + editable('org-ed-pm-n-' + i, pm.name) + '</div>';
+      html += '<div style="font-size:11px;color:var(--text3)">' + editable('org-ed-pm-r-' + i, pm.rank) + ' · ' + pm.region + '</div></div>';
+      html += '<div style="text-align:right;min-width:50px"><div style="font-size:16px;font-weight:800;color:var(--accent)">' + (siteCount || '-') + '</div>';
+      html += '<div style="font-size:9px;color:var(--text3)">현장</div></div></div>';
+    });
+    html += '</div></div>';
+
+    html += '</div>'; // flex 끝
+    html += '</div>'; // wrapper 끝
+
+    container.innerHTML = html;
+  }
+
+  // 현장 조직도 (PM별 현장 리스트)
+  window.renderOrgSites = function() {
+    var container = document.getElementById('org-sites-container');
+    if (!container) return;
+    var org = getOrgData();
+    var pjList = getProjectList();
+    var html = '';
+    org.pms.forEach(function(pm) {
+      var pmSites = pjList.filter(function(pj) {
+        var pjData = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
+        return pjData['pj-pm'] === pm.name;
+      });
+      html += '<div style="margin-bottom:20px">';
+      html += '<div style="font-weight:800;font-size:14px;margin-bottom:8px">' + pm.name + ' <span style="font-weight:400;color:var(--text3);font-size:12px">' + pm.rank + ' · ' + pm.region + '</span> <span style="color:var(--accent);font-size:13px">' + pmSites.length + '개 현장</span></div>';
+      if (pmSites.length) {
+        html += '<table class="table table-grid" style="font-size:12px"><thead><tr style="background:var(--surface2)"><th style="width:40px;text-align:center">No</th><th style="min-width:80px">건설사</th><th style="min-width:200px">현장명</th><th style="min-width:60px;text-align:center">소장</th><th style="min-width:60px;text-align:center">공무</th><th style="min-width:70px;text-align:center">준공예정</th></tr></thead><tbody>';
+        pmSites.forEach(function(pj, si) {
+          var pd = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
+          var assigned = pd.assignedStaff || [];
+          var mgr = assigned.filter(function(a){return (a.job||'').indexOf('소장')>=0;}).map(function(a){return a.name;}).join(', ') || pd['pj-site-manager'] || '-';
+          var adm = assigned.filter(function(a){return (a.job||'').indexOf('공무')>=0;}).map(function(a){return a.name;}).join(', ') || pd['pj-site-admin'] || '-';
+          var endD = pd['pj-end-date'] || '-';
+          var endLabel = endD !== '-' ? endD.substring(0,7) : '-';
+          html += '<tr><td style="text-align:center;color:var(--text3)">' + (si+1) + '</td><td>' + (pd['pj-contractor']||'-') + '</td><td style="font-weight:600">' + (pj.name||'-') + '</td><td style="text-align:center">' + mgr + '</td><td style="text-align:center">' + adm + '</td><td style="text-align:center;color:var(--text3)">' + endLabel + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      } else {
+        html += '<div style="padding:12px;color:var(--text3);font-size:12px">배정된 현장이 없습니다</div>';
+      }
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+
+  window.addOrgMember = function(dept) {
+    var input = document.getElementById('org-add-' + dept);
+    if (!input || !input.value.trim()) { showToast('이름/직급을 입력해주세요', 'error'); return; }
+    var org = getOrgData();
+    if (!org.teamMembers) org.teamMembers = {};
+    if (!org.teamMembers[dept]) org.teamMembers[dept] = [];
+    org.teamMembers[dept].push(input.value.trim());
+    saveOrgData(org);
+    renderOrgChart();
+    showToast('✅ ' + dept + '에 추가 완료', 'success');
+  }
+
+  window.removeOrgMember = function(dept, idx) {
+    var org = getOrgData();
+    if (!org.teamMembers || !org.teamMembers[dept]) return;
+    var removed = org.teamMembers[dept].splice(idx, 1);
+    saveOrgData(org);
+    renderOrgChart();
+    showToast('🗑 ' + (removed[0]||'') + ' 삭제', 'success');
+  }
+
+  window.editOrgChart = function() { toggleOrgEdit(); }
+
+  window.renderOrgAccounts = function() {
+    var tbody = document.getElementById('org-accounts-tbody');
+    if (!tbody) return;
+    var accounts = getOrgAccounts();
+    // 기본 계정 포함
+    var defaultAccounts = [
+      { id: 'admin', name: '관리자', role: '최고관리자', dept: '시스템', sites: '전체', active: true, isDefault: true },
+      { id: 'hq', name: '본사', role: '본사관리', dept: '본사', sites: '전체', active: true, isDefault: true },
+      { id: 'site', name: '현장', role: '현장관리', dept: '현장', sites: '배치현장', active: true, isDefault: true }
+    ];
+    var all = defaultAccounts.concat(accounts);
+    tbody.innerHTML = all.map(function(a, i) {
+      return '<tr>'
+        + '<td style="font-weight:600">' + a.id + (a.isDefault ? ' <span style="font-size:9px;color:var(--text3)">(기본)</span>' : '') + '</td>'
+        + '<td>' + (a.name||'-') + '</td>'
+        + '<td><span class="badge badge-blue" style="font-size:10px">' + (a.role||'-') + '</span></td>'
+        + '<td style="font-size:12px">' + (a.dept||'-') + '</td>'
+        + '<td style="font-size:12px">' + (a.sites||'-') + '</td>'
+        + '<td>' + (a.active !== false ? '<span class="badge badge-green" style="font-size:10px">활성</span>' : '<span class="badge" style="font-size:10px;background:#fee2e2;color:var(--danger)">비활성</span>') + '</td>'
+        + '<td>' + (a.isDefault ? '' : '<button class="btn btn-secondary" style="padding:2px 8px;font-size:10px">편집</button>') + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  window.openAddAccountModal = function() { showToast('계정 추가 기능 준비 중', 'info'); }
+
+  window.renderOrgPermissions = function() {
+    var perms = getOrgPerms();
+    var tbody = document.getElementById('org-perms-tbody');
+    if (!tbody) return;
+    var MENUS = [
+      { key: 'dashboard', label: '현황 대시보드' },
+      { key: 'project', label: '프로젝트 관리' },
+      { key: 'execution', label: '실행관리' },
+      { key: 'staff', label: '정규직 관리' },
+      { key: 'payroll', label: '노무비 정산' },
+      { key: 'materials', label: '자재관리' },
+      { key: 'labor', label: '노무관리' },
+      { key: 'expense', label: '경비관리' },
+      { key: 'meal', label: '식수관리' },
+      { key: 'fund', label: '자금청구' },
+      { key: 'cost', label: '원가/정산보고서' },
+      { key: 'org', label: '조직관리' }
+    ];
+    var ROLES = ['exec','vp','pm','hq','site_mgr','site_admin'];
+    tbody.innerHTML = MENUS.map(function(m) {
+      var p = perms[m.key] || {};
+      return '<tr><td style="font-weight:600;font-size:12px">' + m.label + '</td>'
+        + ROLES.map(function(r) {
+          return '<td style="text-align:center"><input type="checkbox" ' + (p[r] ? 'checked' : '') + ' onchange="togglePerm(\'' + m.key + '\',\'' + r + '\',this.checked)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer"></td>';
+        }).join('')
+        + '</tr>';
+    }).join('');
+  }
+
+  window.togglePerm = function(menu, role, checked) {
+    var perms = getOrgPerms();
+    if (!perms[menu]) perms[menu] = {};
+    perms[menu][role] = checked;
+    saveOrgPermsData(perms);
+  }
+
+  window.saveOrgPermissions = function() {
+    showToast('✅ 권한 설정이 저장되었습니다', 'success');
+  }
+
   // 백업
   window.exportData=function(){
     var BASE_KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_expenses','cm_meals','cm_restaurants'];
@@ -12482,6 +13221,7 @@ window.cmsLogout=function(){
     var pjList=JSON.parse(localStorage.getItem('cm_projects')||'[]');
     data['cm_projects']=pjList;
     data['cm_staff']=JSON.parse(localStorage.getItem('cm_staff')||'[]');
+    data['cm_workers_master']=JSON.parse(localStorage.getItem('cm_workers_master')||'[]');
     pjList.forEach(function(pj){
       var pjData=localStorage.getItem('cm_project_'+pj.id);if(pjData)data['cm_project_'+pj.id]=JSON.parse(pjData);
       BASE_KEYS.forEach(function(k){var v=localStorage.getItem(k+'_'+pj.id);if(v){try{data[k+'_'+pj.id]=JSON.parse(v);}catch(e){data[k+'_'+pj.id]=v;}}});
