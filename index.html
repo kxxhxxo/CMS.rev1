@@ -1160,11 +1160,14 @@ function doLogin(){
   var mt=document.getElementById('mtabbar');if(mt)mt.style.display='';
   var ne=document.getElementById('cms-user-name');if(ne)ne.textContent=acc.name;
   var staffNav=document.getElementById('nav-staff');if(staffNav)staffNav.style.display=(acc.id==='hq'||acc.id==='admin')?'':'none';
+  var payrollNav=document.getElementById('nav-payroll');if(payrollNav)payrollNav.style.display=(acc.id==='hq'||acc.id==='admin')?'':'none';
+  var wageSec=document.getElementById('nav-wage-section');if(wageSec)wageSec.style.display=(acc.id==='hq'||acc.id==='admin')?'':'none';
+  initActiveSite();
 }
 (function(){
   function initLogin(){
     var s=sessionStorage.getItem('cms_login');
-    if(s){try{var d=JSON.parse(s);if(Date.now()-d.time<86400000){document.getElementById('login-screen').style.display='none';var ne=document.getElementById('cms-user-name');if(ne)ne.textContent=d.name;var sn=document.getElementById('nav-staff');if(sn)sn.style.display=(d.id==='hq'||d.id==='admin')?'':'none';return;}}catch(e){}}
+    if(s){try{var d=JSON.parse(s);if(Date.now()-d.time<86400000){document.getElementById('login-screen').style.display='none';var ne=document.getElementById('cms-user-name');if(ne)ne.textContent=d.name;var sn=document.getElementById('nav-staff');if(sn)sn.style.display=(d.id==='hq'||d.id==='admin')?'':'none';var pn=document.getElementById('nav-payroll');if(pn)pn.style.display=(d.id==='hq'||d.id==='admin')?'':'none';var ws=document.getElementById('nav-wage-section');if(ws)ws.style.display=(d.id==='hq'||d.id==='admin')?'':'none';initActiveSite();return;}}catch(e){}}
     var sb=document.querySelector('.sidebar');if(sb)sb.style.display='none';
     var mn=document.querySelector('.main');if(mn)mn.style.display='none';
     var mt=document.getElementById('mtabbar');if(mt)mt.style.display='none';
@@ -1206,23 +1209,28 @@ window.cmsLogout=function(){
     <span class="nav-icon">📁</span> 실행관리
     <span style="margin-left:auto;font-size:9px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px">조회</span>
   </div>
+
+  <div class="sidebar-section" id="nav-wage-section" style="display:none">임금관리</div>
   <div class="nav-item" id="nav-staff" onclick="navigate('staff', this)" style="display:none">
     <span class="nav-icon">👔</span> 정규직 관리
-    <span style="margin-left:auto;font-size:9px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px">본사</span>
+  </div>
+  <div class="nav-item" id="nav-payroll" onclick="navigate('payroll', this)" style="display:none">
+    <span class="nav-icon">💳</span> 노무비 정산
   </div>
 
   <div class="sidebar-section">현장 관리</div>
+  <div id="nav-site-selector" style="padding:4px 16px 8px;display:none">
+    <select class="form-select" id="nav-active-site" onchange="switchActiveSite(this.value)" style="width:100%;padding:6px 8px;font-size:12px;font-weight:700;border:2px solid var(--accent);border-radius:6px;background:#f0fdf4">
+    </select>
+  </div>
   <div class="nav-item" onclick="navigate('materials', this)">
     <span class="nav-icon">📦</span> 자재관리
-    <span class="nav-badge warn">3</span>
   </div>
   <div class="nav-item" onclick="navigate('labor', this)">
     <span class="nav-icon">👷</span> 노무관리
-    <span class="nav-badge">12</span>
   </div>
   <div class="nav-item" onclick="navigate('expense', this)">
     <span class="nav-icon">💰</span> 경비관리
-    <span class="nav-badge info">2</span>
   </div>
   <div class="nav-item" onclick="navigate('meal', this)">
     <span class="nav-icon">🍚</span> 식수관리
@@ -1476,6 +1484,17 @@ window.cmsLogout=function(){
           </div>
         </div>
 
+        <!-- 진행/준공 탭 -->
+        <div class="tabs" style="margin-bottom:12px">
+          <div class="tab active" id="pj-tab-active" onclick="switchPjTab('active')">🏗 진행 현장 <span id="pj-tab-active-count" style="font-size:11px;margin-left:4px"></span></div>
+          <div class="tab" id="pj-tab-completed" onclick="switchPjTab('completed')">🏁 준공 현장 <span id="pj-tab-completed-count" style="font-size:11px;margin-left:4px"></span></div>
+          <div id="pj-year-filter-wrap" style="display:none;margin-left:auto;align-self:center">
+            <select class="form-select" id="pj-year-filter" onchange="renderProjectList()" style="padding:5px 8px;font-size:12px;min-width:100px">
+              <option value="">전체 년도</option>
+            </select>
+          </div>
+        </div>
+
         <!-- 리스트 테이블 -->
         <div class="card">
           <div style="overflow-x:auto">
@@ -1491,7 +1510,7 @@ window.cmsLogout=function(){
                   <th style="min-width:90px;text-align:center">착공일</th>
                   <th style="min-width:90px;text-align:center">준공예정일</th>
                   <th style="min-width:60px;text-align:center">잔여일</th>
-                  <th style="width:50px;text-align:center" id="pj-del-th"></th>
+                  <th style="width:90px;text-align:center" id="pj-del-th"></th>
                 </tr>
               </thead>
               <tbody id="pj-list-tbody"></tbody>
@@ -1626,11 +1645,13 @@ window.cmsLogout=function(){
                 </div>
                 <div>
                   <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장소장</label>
-                  <input class="form-input" id="pj-site-manager" placeholder="현장소장 성명" style="width:100%">
+                  <input class="form-input" id="pj-site-manager" list="pj-manager-list" placeholder="이름 입력 또는 선택" style="width:100%" oninput="filterPjStaffList('pj-manager-list','소장')">
+                  <datalist id="pj-manager-list"></datalist>
                 </div>
                 <div>
                   <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">현장공무</label>
-                  <input class="form-input" id="pj-site-admin" placeholder="현장공무 성명" style="width:100%">
+                  <input class="form-input" id="pj-site-admin" list="pj-admin-list" placeholder="이름 입력 또는 선택" style="width:100%" oninput="filterPjStaffList('pj-admin-list','공무')">
+                  <datalist id="pj-admin-list"></datalist>
                 </div>
               </div>
             </div>
@@ -1672,6 +1693,43 @@ window.cmsLogout=function(){
                   <label class="form-label" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">비고</label>
                   <input class="form-input" id="pj-building-note" placeholder="기타 건축 개요 메모" style="width:100%">
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 현장 인력 배치 (접기/펼치기) -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header" onclick="togglePjSection('pj-sec-staff')" style="cursor:pointer;user-select:none">
+              <div class="card-title"><span id="pj-sec-staff-arrow" style="display:inline-block;transition:transform 0.2s;transform:rotate(-90deg);margin-right:4px">▶</span> 현장 인력 배치</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:var(--text3)">정규직관리에서 등록된 현장 직원을 배치</span>
+              </div>
+            </div>
+            <div id="pj-sec-staff" style="display:none">
+              <div style="padding:16px">
+                <!-- 배치 가능 인원 -->
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+                  <label style="font-size:12px;font-weight:700">직원 추가</label>
+                  <select class="form-select" id="pj-staff-add-select" style="width:220px;padding:6px 8px;font-size:12px">
+                    <option value="">-- 배치할 직원 선택 --</option>
+                  </select>
+                  <button class="btn btn-primary" style="padding:5px 14px;font-size:12px" onclick="addStaffToProject()">+ 배치</button>
+                </div>
+                <!-- 배치된 인원 목록 -->
+                <table class="table" id="pj-staff-table">
+                  <thead>
+                    <tr style="background:var(--surface2)">
+                      <th style="min-width:70px;text-align:center">성명</th>
+                      <th style="min-width:70px;text-align:center">직종</th>
+                      <th style="min-width:100px;text-align:right">기본급</th>
+                      <th style="min-width:100px;text-align:center">연락처</th>
+                      <th style="width:60px;text-align:center"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="pj-staff-tbody">
+                    <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px;font-size:12px">배치된 인원이 없습니다</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1853,6 +1911,18 @@ window.cmsLogout=function(){
                 <div class="form-group">
                   <label class="form-label required">연락처</label>
                   <input class="form-input" id="sf-phone" placeholder="010-0000-0000" oninput="formatPhone(this)">
+                </div>
+              </div>
+
+              <!-- 배치현장 (현장 선택 시만 표시) -->
+              <div id="sf-site-group" style="display:none">
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label required">배치현장</label>
+                    <select class="form-select" id="sf-site-id">
+                      <option value="">-- 현장 선택 --</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -2102,6 +2172,184 @@ window.cmsLogout=function(){
 
       <div id="staff-empty" style="display:none">
         <div class="empty-state"><div class="empty-icon">👔</div><div class="empty-text">등록된 직원이 없습니다.</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 노무비 정산 ===== -->
+    <div class="page" id="page-payroll">
+      <div class="page-header">
+        <div>
+          <div class="page-title">노무비 정산</div>
+          <div class="page-subtitle">월별 급여·임금 지출 및 4대보험·원천징수 정산</div>
+        </div>
+      </div>
+
+      <!-- 정산월 선택 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700">정산월</label>
+        <input type="month" class="form-input" id="pr-month" style="width:180px;padding:7px 12px" onchange="renderPayroll()">
+      </div>
+
+      <!-- 탭 -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'payroll-tab','pr-tab-hq');renderPayroll()">🏢 본사 (정규직)</div>
+        <div class="tab" onclick="switchTab(this,'payroll-tab','pr-tab-site');renderPayroll()">🏗 현장 (정규직+일용직)</div>
+        <div class="tab" onclick="switchTab(this,'payroll-tab','pr-tab-insurance')">📋 4대보험 신고</div>
+      </div>
+
+      <div id="payroll-tab">
+
+        <!-- 본사 탭 -->
+        <div id="pr-tab-hq">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">본사 정규직 급여 명세</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary" onclick="exportPayrollPDF('hq')" style="padding:6px 12px;font-size:12px">📄 PDF</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table" style="min-width:1100px;font-size:12px">
+                <thead>
+                  <tr style="background:var(--surface2)">
+                    <th rowspan="2" style="min-width:70px;text-align:center">성명</th>
+                    <th rowspan="2" style="min-width:60px;text-align:center">직급</th>
+                    <th rowspan="2" style="min-width:70px;text-align:center">팀명</th>
+                    <th colspan="4" style="text-align:center;background:#e8f5e9;border-bottom:1px solid #c8e6c9">지급 항목</th>
+                    <th colspan="5" style="text-align:center;background:#fce4ec;border-bottom:1px solid #f8bbd0">공제 항목</th>
+                    <th rowspan="2" style="min-width:100px;text-align:right;background:#e3f2fd">실지급액</th>
+                  </tr>
+                  <tr style="background:var(--surface2)">
+                    <th style="text-align:right;background:#e8f5e9;min-width:90px">기본급</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:70px">자가운전</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:60px">수당</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:90px;font-weight:800">지급계</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:80px">4대보험</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:70px">소득세</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:60px">지방세</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:60px">상조</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:80px;font-weight:800">공제계</th>
+                  </tr>
+                </thead>
+                <tbody id="pr-hq-tbody">
+                  <tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">정산월을 선택해주세요</td></tr>
+                </tbody>
+                <tfoot id="pr-hq-tfoot" style="display:none">
+                  <tr style="background:#fff9c4;font-weight:800">
+                    <td colspan="3" style="text-align:center">합계</td>
+                    <td id="pr-hq-sum-basic" style="text-align:right"></td>
+                    <td id="pr-hq-sum-car" style="text-align:right"></td>
+                    <td id="pr-hq-sum-allow" style="text-align:right"></td>
+                    <td id="pr-hq-sum-gross" style="text-align:right;color:#2e7d32"></td>
+                    <td id="pr-hq-sum-ins" style="text-align:right"></td>
+                    <td id="pr-hq-sum-tax" style="text-align:right"></td>
+                    <td id="pr-hq-sum-local" style="text-align:right"></td>
+                    <td id="pr-hq-sum-funeral" style="text-align:right"></td>
+                    <td id="pr-hq-sum-ded" style="text-align:right;color:#c62828"></td>
+                    <td id="pr-hq-sum-net" style="text-align:right;color:var(--accent);font-size:13px"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 현장 탭 -->
+        <div id="pr-tab-site" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <label style="font-size:13px;font-weight:700">현장 선택</label>
+            <select class="form-select" id="pr-site-select" onchange="renderPayroll()" style="width:280px;padding:7px 12px">
+              <option value="">-- 현장 선택 --</option>
+            </select>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">현장 인력 급여 명세</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary" onclick="exportPayrollPDF('site')" style="padding:6px 12px;font-size:12px">📄 PDF</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table" style="min-width:1200px;font-size:12px">
+                <thead>
+                  <tr style="background:var(--surface2)">
+                    <th rowspan="2" style="min-width:50px;text-align:center">구분</th>
+                    <th rowspan="2" style="min-width:70px;text-align:center">성명</th>
+                    <th rowspan="2" style="min-width:60px;text-align:center">직종</th>
+                    <th colspan="5" style="text-align:center;background:#e8f5e9;border-bottom:1px solid #c8e6c9">지급 항목</th>
+                    <th colspan="5" style="text-align:center;background:#fce4ec;border-bottom:1px solid #f8bbd0">공제 항목</th>
+                    <th rowspan="2" style="min-width:100px;text-align:right;background:#e3f2fd">실지급액</th>
+                  </tr>
+                  <tr style="background:var(--surface2)">
+                    <th style="text-align:right;background:#e8f5e9;min-width:90px">기본급</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:70px">자가운전</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:60px">식대</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:60px">수당</th>
+                    <th style="text-align:right;background:#e8f5e9;min-width:90px;font-weight:800">지급계</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:80px">4대보험</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:70px">소득세</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:60px">지방세</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:60px">상조</th>
+                    <th style="text-align:right;background:#fce4ec;min-width:80px;font-weight:800">공제계</th>
+                  </tr>
+                </thead>
+                <tbody id="pr-site-tbody">
+                  <tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">현장을 선택해주세요</td></tr>
+                </tbody>
+                <tfoot id="pr-site-tfoot" style="display:none"></tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4대보험 신고 탭 -->
+        <div id="pr-tab-insurance" style="display:none">
+          <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+            <div class="kpi-card blue">
+              <div class="kpi-label">국민연금</div>
+              <div class="kpi-value" id="pr-ins-pension">-</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">사업장 + 근로자 합산</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-label">건강보험</div>
+              <div class="kpi-value" id="pr-ins-health">-</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">장기요양 포함</div>
+            </div>
+            <div class="kpi-card yellow">
+              <div class="kpi-label">고용보험</div>
+              <div class="kpi-value" id="pr-ins-employ">-</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">사업장 + 근로자 합산</div>
+            </div>
+            <div class="kpi-card" style="border-top:3px solid #e91e63">
+              <div class="kpi-label">산재보험</div>
+              <div class="kpi-value" id="pr-ins-injury">-</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">사업장 전액 부담</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">4대보험 신고 내역</div>
+              <span style="font-size:11px;color:var(--text3)">정산월 기준 전 직원 합산</span>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="table" style="font-size:12px">
+                <thead>
+                  <tr style="background:var(--surface2)">
+                    <th style="min-width:120px">보험 항목</th>
+                    <th style="min-width:100px;text-align:right">근로자 부담분</th>
+                    <th style="min-width:100px;text-align:right">사업장 부담분</th>
+                    <th style="min-width:100px;text-align:right;font-weight:800">합계</th>
+                    <th style="min-width:80px;text-align:center">요율</th>
+                  </tr>
+                </thead>
+                <tbody id="pr-ins-tbody">
+                  <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">정산월을 선택하면 자동 집계됩니다</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -3291,53 +3539,142 @@ window.cmsLogout=function(){
       <div class="page-header">
         <div>
           <div class="page-title">자금청구</div>
-          <div class="page-subtitle">월별 자금청구서 작성 및 제출 관리</div>
+          <div class="page-subtitle">월별 소요자금 정산 및 청구서 작성</div>
         </div>
-        <button class="btn btn-primary">+ 청구서 작성</button>
       </div>
 
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header"><div class="card-title">2025년 2월 자금청구서 작성</div></div>
-        <div class="card-body">
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label">청구 기간</label>
-              <div style="display:flex;gap:8px">
-                <input type="date" class="form-input" value="2025-02-01">
-                <span style="line-height:38px;color:var(--text3)">~</span>
-                <input type="date" class="form-input" value="2025-02-28">
+      <!-- 청구월 선택 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700">청구월</label>
+        <input type="month" class="form-input" id="fund-month" style="width:180px;padding:7px 12px" onchange="renderFund()">
+      </div>
+
+      <!-- 탭 -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'fund-tab','fund-tab-detail');renderFund()">📋 소요자금 신청서</div>
+        <div class="tab" onclick="switchTab(this,'fund-tab','fund-tab-summary');renderFund()">📊 자금청구 품의서</div>
+      </div>
+
+      <div id="fund-tab">
+
+        <!-- 탭1: 소요자금 정산 및 신청서 -->
+        <div id="fund-tab-detail">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">월 소요자금 정산 및 신청서</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span id="fund-site-name" style="font-size:12px;color:var(--text3)"></span>
+                <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">📄 PDF</button>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">제출처</label>
-              <input class="form-input" value="(주)대한건설 공사부">
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:750px">
+                <thead>
+                  <tr>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:200px">구 분</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:90px">팀장 / 거래처</th>
+                    <th colspan="3" style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center">금 회 투 입</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:100px">증빙 / 비고</th>
+                  </tr>
+                  <tr>
+                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa"></th>
+                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa"></th>
+                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa;text-align:right;min-width:110px;font-weight:700">공급가액</th>
+                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa;text-align:right;min-width:80px;font-weight:700">V.A.T</th>
+                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa;text-align:right;min-width:110px;font-weight:700">합 계</th>
+                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa"></th>
+                  </tr>
+                </thead>
+                <tbody id="fund-detail-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 탭2: 현장투입 정산서 -->
+        <div id="fund-tab-summary" style="display:none">
+
+          <!-- 품의서 결재란 + 기안정보 -->
+          <div class="card" style="margin-bottom:16px">
+            <div style="padding:24px;max-width:900px;margin:0 auto">
+              <!-- 결재란 -->
+              <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px">
+                <tr>
+                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:70px">보존기한</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">5년</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:65px">현장소장</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px" id="fund-appr-manager">-</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:45px">PM</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">-</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:45px">전무</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">-</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:60px">대표이사</td>
+                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">-</td>
+                </tr>
+              </table>
+
+              <!-- 기안 정보 -->
+              <table style="border-collapse:collapse;font-size:13px;margin-bottom:24px;width:100%;max-width:520px">
+                <tr>
+                  <td style="padding:10px 16px;width:80px;font-weight:700;color:var(--text2);border-bottom:1px solid #eee">기안일자</td>
+                  <td style="padding:10px 16px;border-bottom:1px solid #eee" id="fund-appr-date">-</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 16px;font-weight:700;color:var(--text2);border-bottom:1px solid #eee">기 안 자</td>
+                  <td style="padding:10px 16px;border-bottom:1px solid #eee" id="fund-appr-writer">-</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 16px;font-weight:700;color:var(--text2)">제 목</td>
+                  <td style="padding:10px 16px;font-weight:700;font-size:14px" id="fund-appr-title">-</td>
+                </tr>
+              </table>
+
+              <p style="font-size:13px;margin:0;line-height:1.8;color:var(--text2)">
+                표제의 건과 관련하여 <span id="fund-appr-month-text" style="font-weight:700">0000년 00월</span> 소요자금을 아래와 같이 품의 하오니 재가하여 주시기 바랍니다.
+              </p>
             </div>
           </div>
 
-          <div class="card" style="margin-top:8px">
-            <div class="card-header"><div class="card-title" style="font-size:13px">청구 항목</div></div>
-            <table class="table">
-              <thead><tr><th>항목</th><th>금액</th><th>비고</th></tr></thead>
-              <tbody>
-                <tr><td>노무비</td><td class="amount">187,400,000</td><td>전기팀, 통신팀, 소방팀</td></tr>
-                <tr><td>자재비</td><td class="amount">142,600,000</td><td>철근, 레미콘, 거푸집 외</td></tr>
-                <tr><td>장비비</td><td class="amount">43,400,000</td><td>타워크레인, 굴삭기 외</td></tr>
-                <tr><td>공사경비</td><td class="amount">32,400,000</td><td>현장관리비, 안전관리비 외</td></tr>
-                <tr>
-                  <td style="font-weight:700">합계</td>
-                  <td class="amount" style="color:var(--accent);font-weight:700;font-size:15px">405,800,000</td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- 현장투입 정산서 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">월 현장투입 정산서</div>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">📄 PDF</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:950px">
+                <thead>
+                  <tr>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:140px">구 분</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:110px">도급/하도급<br>[A]</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:100px">실행예산<br>[B]</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:100px">전회투입<br>[C]</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#fafafa;font-weight:800;text-align:right;min-width:110px;border-color:#c62828;border-width:2px">금회투입<br>[D]</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:110px">누계금액<br>[E]=[C]+[D]</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:100px">잔여금액<br>[B]-[E]</th>
+                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:70px">집행률[%]<br>[E]/[B]</th>
+                  </tr>
+                </thead>
+                <tbody id="fund-summary-tbody"></tbody>
+              </table>
+            </div>
           </div>
 
-          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-            <button class="btn btn-secondary">미리보기</button>
-            <button class="btn btn-secondary">📥 PDF 출력</button>
-            <button class="btn btn-primary">📤 청구서 제출</button>
+          <!-- 하도급 계약 현황 -->
+          <div class="card" style="margin-top:16px">
+            <div class="card-header"><div class="card-title">하도급 계약 현황</div></div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px" id="fund-contract-table">
+                <thead id="fund-contract-thead"></thead>
+                <tbody id="fund-contract-tbody">
+                  <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">도급현황 데이터 로딩 중...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        <!-- 탭3: 품의서 -->
       </div>
     </div>
 
@@ -3439,6 +3776,7 @@ window.cmsLogout=function(){
       dashboard: '현황 대시보드',
       dogeup: '프로젝트 관리',
       staff: '정규직 관리',
+      payroll: '노무비 정산',
       silhaeng: '실행관리',
       materials: '자재관리',
       labor: '노무관리',
@@ -3457,6 +3795,8 @@ window.cmsLogout=function(){
       renderProjectList();
     }
     if(pageId === 'staff') { renderStaffList(); }
+    if(pageId === 'payroll') { initPayroll(); }
+    if(pageId === 'fund') { initFund(); }
   }
 
   function switchTab(el, containerId, targetId) {
@@ -4313,13 +4653,13 @@ window.cmsLogout=function(){
   /* ===== 페이지 로드 초기화 ===== */
   document.addEventListener('DOMContentLoaded', () => {
     // 첫 접속 시 백업.json 자동 로드
-    const isFirstVisit = !localStorage.getItem('cm_workers');
+    const isFirstVisit = !localStorage.getItem(siteKey('cm_workers'));
     if (isFirstVisit) {
       fetch('./백업.json')
         .then(r => r.json())
         .then(data => {
           const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_meals'];
-          KEYS.forEach(k => { if (data[k]) localStorage.setItem(k, JSON.stringify(data[k])); });
+          KEYS.forEach(k => { if (data[k]) localStorage.setItem(siteKey(k), JSON.stringify(data[k])); });
           showToast('✅ 데이터 자동 로드 완료! 새로고침합니다...', 'success');
           setTimeout(() => location.reload(), 1500);
         })
@@ -4619,7 +4959,7 @@ window.cmsLogout=function(){
 
 <script>
   /* ===== 마스터 데이터 ===== */
-  const teams = JSON.parse(localStorage.getItem('cm_teams') || '[]');
+  const teams = JSON.parse(localStorage.getItem(siteKey('cm_teams')) || '[]');
   let editingTeamIdx = null; // 현재 수정 중인 팀 인덱스 // 팀 마스터 - 팀원 등록 후 사용
 
   const checkinRecords = []; // 근태기기 출역 기록
@@ -5045,12 +5385,12 @@ window.cmsLogout=function(){
   /* ===== 자동저장 ===== */
   function saveToStorage() {
     try {
-      localStorage.setItem('cm_workers', JSON.stringify(workers));
-      localStorage.setItem('cm_teams', JSON.stringify(teams));
+      localStorage.setItem(siteKey('cm_workers'), JSON.stringify(workers));
+      localStorage.setItem(siteKey('cm_teams'), JSON.stringify(teams));
     } catch(e) { console.warn('저장 실패:', e); }
   }
   /* ===== 근로자 관리 ===== */
-  const workers = JSON.parse(localStorage.getItem('cm_workers') || '[]');
+  const workers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
   let editingWorkerIdx = null;
 
   // 프로필 사진 미리보기
@@ -5353,15 +5693,81 @@ window.cmsLogout=function(){
     });
   }
 
+  function getLinkedStaffForSite() {
+    // 현재 활성 프로젝트에 배치된 정규직만 반환
+    if (!activeSiteId) return [];
+    var saved = JSON.parse(localStorage.getItem('cm_project_' + activeSiteId) || '{}');
+    var assignedNames = (saved.assignedStaff || []).map(function(a){ return a.name; });
+    if (!assignedNames.length) return [];
+    var staffList = getStaffList();
+    return staffList.filter(function(s) {
+      return s.type === '현장' && s.status !== '퇴직' && assignedNames.indexOf(s.name) >= 0;
+    });
+  }
+
+  // 정규직을 근로자(worker) 형태로 변환 (출역/정산 연동용)
+  function getStaffAsWorkers() {
+    return getLinkedStaffForSite().map(function(s) {
+      return {
+        name: s.name || '',
+        phone: s.phone || '',
+        job: s.job || '',
+        gongjong: '',
+        empType: 'monthly',
+        wage: s.wage || '0',
+        nationality: s.nationality || 'domestic',
+        joinDate: s.joinDate || '',
+        leaveDate: s.leaveDate || '',
+        isStaff: true // 정규직 표시 플래그
+      };
+    });
+  }
+
+  // allWorkers에 정규직 합치기 (이름 중복 제거)
+  function getMergedWorkers() {
+    var siteWorkers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
+    var staffWorkers = getStaffAsWorkers();
+    var workerNames = new Set(siteWorkers.map(function(w){return w.name;}));
+    // 정규직 중 이름 중복 없는 것만 추가
+    staffWorkers.forEach(function(sw) {
+      if (!workerNames.has(sw.name)) siteWorkers = [sw].concat(siteWorkers);
+    });
+    return siteWorkers;
+  }
+
   function renderWorkerList(list = null) {
     const tbody = document.getElementById('worker-list-tbody');
     if (!tbody) return;
+
+    // 정규직 연동 행
+    const linkedStaff = getLinkedStaffForSite();
+    let staffRows = '';
+    if (linkedStaff.length && !list) {
+      staffRows = linkedStaff.map((s, i) => {
+        const wage = s.wage ? Number(s.wage).toLocaleString()+'원' : '-';
+        return `<tr style="background:#f0fdf4">
+          <td style="font-weight:700"><div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">정</div><span>${s.name||'-'}</span></div></td>
+          <td style="font-size:12px">${s.job||'-'}</td>
+          <td>
+            <span class="badge badge-green" style="font-size:10px">💼 정규직</span>
+            <div style="font-size:12px;font-weight:600;margin-top:2px">${wage}</div>
+          </td>
+          <td>-</td>
+          <td style="color:var(--text3);font-size:12px">${s.phone||'-'}</td>
+          <td style="font-size:12px">${s.joinDate||'-'}</td>
+          <td><span class="badge badge-green" style="font-size:10px">재직중</span></td>
+          <td style="font-size:11px;color:var(--text3);white-space:nowrap">정규직관리에서 수정</td>
+        </tr>`;
+      }).join('');
+    }
+
     const data = sortWorkers(list || workers);
-    if (!data.length) {
+    if (!data.length && !linkedStaff.length) {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 근로자가 없습니다.<br><span style=\"font-size:12px\">근로자를 등록하면 팀 구성에 사용할 수 있습니다.</span></td></tr>';
       return;
     }
-    tbody.innerHTML = data.map((w, i) => {
+
+    const workerRows = data.map((w, i) => {
       const realIdx  = workers.indexOf(w);
       const isLeave  = !!(w.leaveDate && w.leaveDate.length > 4);
       const isLeader = !!w.isLeader;
@@ -5392,6 +5798,8 @@ window.cmsLogout=function(){
         </td>
       </tr>`;
     }).join('');
+
+    tbody.innerHTML = staffRows + workerRows;
   }
 
   function filterWorkers() {
@@ -5405,6 +5813,69 @@ window.cmsLogout=function(){
       return matchName && matchStatus;
     });
     renderWorkerList(filtered);
+  }
+
+  var leaveTargetIdx = -1;
+
+  function openLeaveModal(idx) {
+    leaveTargetIdx = idx;
+    var w = workers[idx];
+    if (!w) return;
+    document.getElementById('leave-worker-name').textContent = w.name + ' (' + (w.job||'') + ')';
+    document.getElementById('leave-date').value = '';
+    document.getElementById('leave-reason').selectedIndex = 0;
+    document.getElementById('leave-panel').style.display = '';
+    document.getElementById('leave-panel').scrollIntoView({behavior:'smooth'});
+  }
+
+  function closeLeaveModal() {
+    document.getElementById('leave-panel').style.display = 'none';
+    leaveTargetIdx = -1;
+  }
+
+  function confirmLeave() {
+    if (leaveTargetIdx < 0) return;
+    var date = document.getElementById('leave-date').value;
+    if (!date) { showToast('퇴사일자를 선택해주세요', 'error'); return; }
+    var w = workers[leaveTargetIdx];
+    if (!w) { showToast('근로자 정보를 찾을 수 없습니다', 'error'); return; }
+    var wName = w.name;
+    w.leaveDate = date;
+    w.leaveReason = document.getElementById('leave-reason').value;
+    localStorage.setItem(siteKey('cm_workers'), JSON.stringify(workers));
+    closeLeaveModal();
+    renderWorkerList();
+    showToast('🚪 ' + wName + ' 퇴직처리 완료', 'success');
+  }
+
+  function cancelLeave(idx) {
+    var w = workers[idx];
+    if (!w) { showToast('근로자 정보를 찾을 수 없습니다', 'error'); return; }
+    document.getElementById('rejoin-worker-name').textContent = w.name + ' (' + (w.job||'') + ')';
+    document.getElementById('rejoin-history').textContent = '퇴사일: ' + (w.leaveDate||'-') + ' / 사유: ' + (w.leaveReason||'-');
+    document.getElementById('rejoin-date').value = '';
+    document.getElementById('rejoin-panel').style.display = '';
+    document.getElementById('rejoin-panel').scrollIntoView({behavior:'smooth'});
+    window._rejoinIdx = idx;
+  }
+
+  function closeRejoinPanel() {
+    document.getElementById('rejoin-panel').style.display = 'none';
+  }
+
+  function confirmRejoin() {
+    var idx = window._rejoinIdx;
+    if (idx === undefined || idx < 0) return;
+    var w = workers[idx];
+    if (!w) { showToast('근로자 정보를 찾을 수 없습니다', 'error'); return; }
+    var wName = w.name;
+    w.leaveDate = '';
+    w.leaveReason = '';
+    w.rejoinDate = document.getElementById('rejoin-date').value;
+    localStorage.setItem(siteKey('cm_workers'), JSON.stringify(workers));
+    closeRejoinPanel();
+    renderWorkerList();
+    showToast('🔄 ' + wName + ' 복직처리 완료', 'success');
   }
 
   
@@ -5857,17 +6328,17 @@ window.cmsLogout=function(){
 
 
   /* ===== 출역 관리 ===== */
-  window.attendance = JSON.parse(localStorage.getItem('cm_attendance') || '{}');
+  window.attendance = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
   let attYear = new Date().getFullYear();
   let attMonth = new Date().getMonth(); // 0-based
   let attSelectedDate = new Date().toISOString().split('T')[0];
 
   function saveAttToStorage() {
-    localStorage.setItem('cm_attendance', JSON.stringify(attendance));
+    localStorage.setItem(siteKey('cm_attendance'), JSON.stringify(attendance));
   }
 
   function initAttendance() {
-    window.attendance = JSON.parse(localStorage.getItem('cm_attendance') || '{}');
+    window.attendance = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
     attYear = new Date().getFullYear();
     attMonth = new Date().getMonth();
     attSelectedDate = new Date().toISOString().split('T')[0];
@@ -5905,8 +6376,8 @@ window.cmsLogout=function(){
     var yr=attYear, mo=attMonth;
     var daysInMonth=new Date(yr,mo+1,0).getDate();
     var att=window.attendance||{};
-    var allTeams=JSON.parse(localStorage.getItem('cm_teams')||'[]');
-    var allWorkers=JSON.parse(localStorage.getItem('cm_workers')||'[]');
+    var allTeams=JSON.parse(localStorage.getItem(siteKey('cm_teams'))||'[]');
+    var allWorkers=getMergedWorkers();
 
     // 요일 배열 (토/일/공휴일 음영용)
     var dowArr=[];
@@ -6257,7 +6728,7 @@ window.cmsLogout=function(){
       if (!window.attendance[date]) window.attendance[date] = {};
       window.attendance[date][name] = Number(val);
     }
-    localStorage.setItem('cm_attendance', JSON.stringify(window.attendance));
+    localStorage.setItem(siteKey('cm_attendance'), JSON.stringify(window.attendance));
     renderAttendance();
     renderAttCalendar();
   }
@@ -6290,7 +6761,7 @@ window.cmsLogout=function(){
     if (monthTotal) monthTotal.textContent = mTotal.toFixed(1);
 
     // 이번달 노무비 계산
-    const allWorkers = JSON.parse(localStorage.getItem('cm_workers') || '[]');
+    const allWorkers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
     let totalWage = 0;
     Object.entries(window.attendance).forEach(([d, data]) => {
       if (!d.startsWith(ym)) return;
@@ -6315,7 +6786,7 @@ window.cmsLogout=function(){
     const today = attSelectedDate || new Date().toISOString().split('T')[0];
     if (!ym) ym = today.slice(0, 7);
 
-    const allWorkers = JSON.parse(localStorage.getItem('cm_workers') || '[]');
+    const allWorkers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
 
     // 인원별 상세 계산
     const personMap = {}; // name → { w, mandays: {date: val}, total, dailyWage }
@@ -6339,7 +6810,7 @@ window.cmsLogout=function(){
     geumhoeWage = _wageDetailData.reduce((s, p) => s + p.totalWage, 0);
 
     // 실행금액
-    const contractRowsData = JSON.parse(localStorage.getItem('cm_contract_rows') || '[]');
+    const contractRowsData = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || '[]');
     const silhaeng = contractRowsData.reduce((s, r) => s + (r.dogup?.geumak || 0), 0);
     const jeonhoeEl = document.getElementById('wage-jeonhoe');
     const jeonhoe = jeonhoeEl ? (Number(jeonhoeEl.value) || 0) : 0;
@@ -6414,7 +6885,7 @@ window.cmsLogout=function(){
   /* ===== 공사현황 ===== */
   // 엑셀에서 파싱한 원본 세대 데이터 (동→층→호수→평수)
   // BUILDING_DATA: localStorage 기반 (엑셀 업로드 시 채워짐)
-  let BUILDING_DATA = JSON.parse(localStorage.getItem('cm_building_data') || '{}');
+  let BUILDING_DATA = JSON.parse(localStorage.getItem(siteKey('cm_building_data')) || '{}');
   let BUILDING_LIST = Object.keys(BUILDING_DATA);
 
   // 퇴직자 여부 체크 헬퍼
@@ -6429,7 +6900,7 @@ window.cmsLogout=function(){
   // csStatus: 객체 참조 고정 (내용만 교체)
   window.csStatus = {};
   (function() {
-    var _saved = JSON.parse(localStorage.getItem('cm_cs_status') || '{}');
+    var _saved = JSON.parse(localStorage.getItem(siteKey('cm_cs_status')) || '{}');
     Object.keys(_saved).forEach(function(k) { window.csStatus[k] = _saved[k]; });
   })();
 
@@ -6437,18 +6908,18 @@ window.cmsLogout=function(){
   let csSelectedBuilding = BUILDING_LIST[0];
 
   function saveCsToStorage() {
-    localStorage.setItem('cm_cs_status', JSON.stringify(window.csStatus));
+    localStorage.setItem(siteKey('cm_cs_status'), JSON.stringify(window.csStatus));
   }
 
   function initConstruction() {
     // csStatus 최신 상태로 재로드
     // 객체 참조 유지하면서 내용만 교체
-    var _fresh = JSON.parse(localStorage.getItem('cm_cs_status') || '{}');
+    var _fresh = JSON.parse(localStorage.getItem(siteKey('cm_cs_status')) || '{}');
     Object.keys(window.csStatus).forEach(function(k) { delete window.csStatus[k]; });
     Object.keys(_fresh).forEach(function(k) { window.csStatus[k] = _fresh[k]; });
 
     // contractRows 최신 상태로 재로드
-    const latest = JSON.parse(localStorage.getItem('cm_contract_rows') || 'null');
+    const latest = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || 'null');
     if (latest && latest.some(r => r.dogup?.danga > 0 || r.silhaeng?.danga > 0)) {
       contractRows.length = 0;
       latest.forEach(r => contractRows.push(r));
@@ -6464,7 +6935,7 @@ window.cmsLogout=function(){
   // 계약관리에서 실제 단가가 입력된 공종만 공사현황 필터로 반환
   function getCSGongjongList() {
     // 실행 단가가 입력된 공종만 공사현황에 표시
-    const saved = JSON.parse(localStorage.getItem('cm_contract_rows') || '[]');
+    const saved = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || '[]');
     const seen = new Set();
     return saved
       .filter(r => (r.silhaeng?.danga || 0) > 0)
@@ -6537,7 +7008,7 @@ window.cmsLogout=function(){
     if (!container) return;
     const gjList = getCSGongjongList();
     if (!gjList.length) { container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:60px;font-size:13px">실행 단가가 입력된 공종이 없습니다.</div>'; return; }
-    const bData = JSON.parse(localStorage.getItem('cm_building_data') || '{}');
+    const bData = JSON.parse(localStorage.getItem(siteKey('cm_building_data')) || '{}');
 
     // 각 동별, 공종별 진행률 계산
     var buildingStats = {};
@@ -6843,7 +7314,7 @@ window.cmsLogout=function(){
           if (!hasOtherWork) delete window.attendance[removedDate][name];
         });
         if (Object.keys(window.attendance[removedDate]).length === 0) delete window.attendance[removedDate];
-        localStorage.setItem('cm_attendance', JSON.stringify(window.attendance));
+        localStorage.setItem(siteKey('cm_attendance'), JSON.stringify(window.attendance));
         renderAttCalendar();
         if (attSelectedDate === removedDate) renderAttendance();
       }
@@ -6856,8 +7327,8 @@ window.cmsLogout=function(){
   function openWorkerSelectModal(b, fl, gj) {
     document.getElementById('cs-worker-modal')?.remove();
 
-    var allTeams    = JSON.parse(localStorage.getItem('cm_teams')         || '[]');
-    var allContracts= JSON.parse(localStorage.getItem('cm_contract_rows') || '[]');
+    var allTeams    = JSON.parse(localStorage.getItem(siteKey('cm_teams'))         || '[]');
+    var allContracts= JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || '[]');
 
     // 계약관리에서 해당 공종 팀장
     var contractRow = allContracts.find(function(r){ return r.gongjong === gj; });
@@ -6868,7 +7339,7 @@ window.cmsLogout=function(){
 
     // 작업자 목록: 매칭된 팀 있으면 그 팀, 없으면 전체 팀 목록 펼치기
     var workerList = [];
-    var allWorkers = JSON.parse(localStorage.getItem('cm_workers') || '[]');
+    var allWorkers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
     var retiredNames = new Set(allWorkers.filter(isRetired).map(function(w){ return w.name; }));
 
     if (matchedTeam) {
@@ -6961,7 +7432,7 @@ window.cmsLogout=function(){
       if(workerNames.length && startDate){
         if(!attendance[startDate]) attendance[startDate]={};
         workerNames.forEach(function(name){if(!attendance[startDate][name]) attendance[startDate][name]=1.0;});
-        localStorage.setItem('cm_attendance',JSON.stringify(attendance));
+        localStorage.setItem(siteKey('cm_attendance'),JSON.stringify(attendance));
         renderAttCalendar();
         if(attSelectedDate===startDate) renderAttendance();
       }
@@ -7010,7 +7481,7 @@ window.cmsLogout=function(){
       workerNames.forEach(function(name) {
         if (!attendance[workDate][name]) attendance[workDate][name] = 1.0;
       });
-      localStorage.setItem('cm_attendance', JSON.stringify(attendance));
+      localStorage.setItem(siteKey('cm_attendance'), JSON.stringify(attendance));
       // 출역 탭 화면 갱신
       renderAttCalendar();
       if (attSelectedDate === workDate) renderAttendance();
@@ -7025,7 +7496,7 @@ window.cmsLogout=function(){
 
 
   function updateCSSummary() {
-    const allContracts = JSON.parse(localStorage.getItem('cm_contract_rows') || '[]');
+    const allContracts = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || '[]');
     const gjList = getCSGongjongList(); // 실행 단가 있는 공종만
 
     // 전체 세대수 계산
@@ -7157,6 +7628,94 @@ window.cmsLogout=function(){
   /* ===== 프로젝트 목록 관리 ===== */
   let currentProjectId = null;
 
+  /* ===== 활성 현장(프로젝트) 관리 ===== */
+  var activeSiteId = null;
+
+  // 프로젝트별 localStorage 키 생성
+  function siteKey(baseKey) {
+    if (!activeSiteId) return baseKey; // fallback
+    return baseKey + '_' + activeSiteId;
+  }
+
+  // 현장 전환
+  function switchActiveSite(siteId) {
+    activeSiteId = siteId;
+    sessionStorage.setItem('cms_active_site', siteId);
+    // 현재 보고있는 페이지 새로고침
+    var activePage = document.querySelector('.page[style*="display: block"], .page[style*="display:block"]');
+    if (activePage) {
+      var pageId = activePage.id.replace('page-','');
+      if (['labor','materials','expense','meal'].indexOf(pageId) >= 0) {
+        navigate(pageId, document.querySelector('.nav-item.active'));
+      }
+    }
+    updateSiteSelector();
+  }
+
+  // 사이드바 현장선택 드롭다운 갱신
+  function updateSiteSelector() {
+    var sel = document.getElementById('nav-active-site');
+    var container = document.getElementById('nav-site-selector');
+    if (!sel || !container) return;
+    var user = getCurrentUser();
+    var isAdmin = user === 'hq' || user === 'admin';
+    container.style.display = isAdmin ? '' : 'none';
+
+    var pjList = getProjectList();
+    if (!pjList.length) { container.style.display = 'none'; return; }
+
+    sel.innerHTML = pjList.map(function(pj) {
+      return '<option value="' + pj.id + '"' + (pj.id === activeSiteId ? ' selected' : '') + '>' + (pj.name || '(이름없음)') + '</option>';
+    }).join('');
+
+    // activeSiteId가 없으면 첫번째로
+    if (!activeSiteId && pjList.length) {
+      activeSiteId = pjList[0].id;
+      sel.value = activeSiteId;
+      sessionStorage.setItem('cms_active_site', activeSiteId);
+    }
+  }
+
+  // 프로젝트 목록에서 현장 클릭 시 → 현장관리로 진입
+  function enterSiteFromProject(siteId) {
+    activeSiteId = siteId;
+    sessionStorage.setItem('cms_active_site', siteId);
+    updateSiteSelector();
+    navigate('labor', document.querySelector('.nav-item'));
+  }
+
+  // 기존 데이터를 첫번째 프로젝트로 마이그레이션
+  function migrateOldDataToFirstProject() {
+    if (localStorage.getItem('cm_data_migrated') === 'Y') return;
+    var pjList = getProjectList();
+    if (!pjList.length) return;
+    var firstId = pjList[0].id;
+    var OLD_KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_expenses','cm_meals','cm_restaurants'];
+    OLD_KEYS.forEach(function(k) {
+      var val = localStorage.getItem(k);
+      if (val) {
+        var newKey = k + '_' + firstId;
+        if (!localStorage.getItem(newKey)) {
+          localStorage.setItem(newKey, val);
+        }
+      }
+    });
+    localStorage.setItem('cm_data_migrated', 'Y');
+  }
+
+  // 초기화 시 활성현장 복원
+  function initActiveSite() {
+    var saved = sessionStorage.getItem('cms_active_site');
+    var pjList = getProjectList();
+    if (saved && pjList.find(function(p){return p.id===saved;})) {
+      activeSiteId = saved;
+    } else if (pjList.length) {
+      activeSiteId = pjList[0].id;
+    }
+    migrateOldDataToFirstProject();
+    updateSiteSelector();
+  }
+
   function getCurrentUser() {
     try { var d = JSON.parse(sessionStorage.getItem('cms_login') || '{}'); return d.id || ''; } catch(e) { return ''; }
   }
@@ -7166,6 +7725,16 @@ window.cmsLogout=function(){
   }
   function saveProjectList(list) {
     localStorage.setItem('cm_projects', JSON.stringify(list));
+  }
+
+  var pjTabMode = 'active'; // 'active' or 'completed'
+
+  function switchPjTab(mode) {
+    pjTabMode = mode;
+    document.getElementById('pj-tab-active').className = mode === 'active' ? 'tab active' : 'tab';
+    document.getElementById('pj-tab-completed').className = mode === 'completed' ? 'tab active' : 'tab';
+    document.getElementById('pj-year-filter-wrap').style.display = mode === 'completed' ? '' : 'none';
+    renderProjectList();
   }
 
   function renderProjectList() {
@@ -7179,7 +7748,7 @@ window.cmsLogout=function(){
 
     var isAdmin = getCurrentUser() === 'hq' || getCurrentUser() === 'admin';
     if (addBtn) addBtn.style.display = isAdmin ? '' : 'none';
-    if (delTh) delTh.style.display = isAdmin ? '' : 'none';
+    if (delTh) delTh.style.display = '';
 
     var keyword = (document.getElementById('pj-search')?.value || '').trim().toLowerCase();
     var filtered = keyword ? list.filter(function(pj) {
@@ -7188,7 +7757,37 @@ window.cmsLogout=function(){
       return (pj.name || '').toLowerCase().indexOf(keyword) >= 0 || contractor.indexOf(keyword) >= 0;
     }) : list;
 
-    if (countEl) countEl.textContent = '총 ' + filtered.length + '건' + (keyword ? ' (전체 ' + list.length + '건)' : '');
+    var active = filtered.filter(function(pj) { return !pj.completed; });
+    var completed = filtered.filter(function(pj) { return pj.completed; });
+
+    // 탭 카운트
+    var acEl = document.getElementById('pj-tab-active-count');
+    var cpEl = document.getElementById('pj-tab-completed-count');
+    if (acEl) acEl.textContent = '(' + active.length + ')';
+    if (cpEl) cpEl.textContent = '(' + completed.length + ')';
+    if (countEl) countEl.textContent = '';
+
+    // 준공 탭: 년도 필터 옵션 갱신
+    var yearFilter = document.getElementById('pj-year-filter');
+    if (yearFilter && pjTabMode === 'completed') {
+      var years = {};
+      completed.forEach(function(pj) { var y = pj.completedYear || (pj.completedDate||'').substring(0,4) || '미정'; years[y] = true; });
+      var sortedYears = Object.keys(years).sort().reverse();
+      var curVal = yearFilter.value;
+      yearFilter.innerHTML = '<option value="">전체 년도</option>' + sortedYears.map(function(y) { return '<option value="'+y+'"'+(y===curVal?' selected':'')+'>'+y+'년</option>'; }).join('');
+    }
+
+    var isComp = pjTabMode === 'completed';
+    var showList = isComp ? completed : active;
+
+    // 준공 탭: 년도 필터 적용
+    var selectedYear = (yearFilter && isComp) ? yearFilter.value : '';
+    if (selectedYear && isComp) {
+      showList = showList.filter(function(pj) {
+        var yr = pj.completedYear || (pj.completedDate||'').substring(0,4) || '미정';
+        return yr === selectedYear;
+      });
+    }
 
     if (!list.length) {
       tbody.innerHTML = '';
@@ -7197,47 +7796,72 @@ window.cmsLogout=function(){
     }
     if (empty) empty.style.display = 'none';
 
-    if (!filtered.length) {
-      tbody.innerHTML = '<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">검색 결과가 없습니다.</td></tr>';
+    if (!showList.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">' + (isComp ? '준공 처리된 현장이 없습니다.' : '진행 중인 현장이 없습니다.') + '</td></tr>';
       return;
     }
 
     var today = new Date();
     var fmtAmt = function(v) { return v > 0 ? Math.round(v / 100000000).toLocaleString() + '억' : '-'; };
 
-    tbody.innerHTML = filtered.map(function(pj, i) {
-      var data = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
-      var pivot = data.pivotData || {columns:[], cells:{}};
-      var total = 0;
-      pivot.columns.forEach(function(_, ci) {
-        PJ_INPUT_KEYS.forEach(function(k) { total += (pivot.cells[k + '_' + ci] || 0); });
+    // 준공 현장: 년도별 그룹핑
+    if (isComp) {
+      var byYear = {};
+      showList.forEach(function(pj) {
+        var yr = pj.completedYear || (pj.completedDate || '').substring(0, 4) || '미정';
+        if (!byYear[yr]) byYear[yr] = [];
+        byYear[yr].push(pj);
       });
-      var contractor = data['pj-contractor'] || '-';
-      var manager = data['pj-site-manager'] || '-';
-      var admin = data['pj-site-admin'] || '-';
-      var startD = data['pj-start-date'] || '';
-      var endD = data['pj-end-date'] || '';
-      var remainText = '-', remainColor = 'var(--text3)';
-      if (endD) {
-        var diff = Math.ceil((new Date(endD) - today) / 86400000);
-        remainText = diff >= 0 ? 'D-' + diff : 'D+' + Math.abs(diff);
-        remainColor = diff < 0 ? 'var(--danger)' : diff < 90 ? '#e67e22' : 'var(--accent)';
-      }
-      var delBtn = isAdmin ? '<td style="text-align:center"><button onclick="event.stopPropagation();deleteProject(\'' + pj.id + '\')" style="border:none;background:none;color:var(--danger);cursor:pointer;font-size:11px">삭제</button></td>' : '';
+      var years = Object.keys(byYear).sort().reverse();
+      var html = '';
+      years.forEach(function(yr) {
+        html += '<tr><td colspan="10" style="padding:8px 12px;background:#f5f5f5;font-weight:800;font-size:12px;color:var(--text2);border-bottom:1px solid #e0e0e0">' + yr + '년 (' + byYear[yr].length + '건)</td></tr>';
+        byYear[yr].forEach(function(pj, i) { html += buildPjRow(pj, i + 1, true, isAdmin, today, fmtAmt); });
+      });
+      tbody.innerHTML = html;
+    } else {
+      tbody.innerHTML = showList.map(function(pj, i) { return buildPjRow(pj, i + 1, false, isAdmin, today, fmtAmt); }).join('');
+    }
+  }
 
-      return '<tr onclick="openProjectDetail(\'' + pj.id + '\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'
-        + '<td style="text-align:center;color:var(--text3);font-size:11px">' + (i + 1) + '</td>'
-        + '<td style="font-size:12px;color:var(--text2)">' + contractor + '</td>'
-        + '<td style="font-weight:600;font-size:13px">' + (pj.name || '(이름 없음)') + '</td>'
-        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + manager + '</td>'
-        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + admin + '</td>'
-        + '<td style="text-align:right;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums">' + fmtAmt(total) + '</td>'
-        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + (startD || '-') + '</td>'
-        + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + (endD || '-') + '</td>'
-        + '<td style="text-align:center;font-weight:700;color:' + remainColor + ';font-size:12px">' + remainText + '</td>'
-        + delBtn
-        + '</tr>';
-    }).join('');
+  function buildPjRow(pj, num, isComp, isAdmin, today, fmtAmt) {
+    var data = JSON.parse(localStorage.getItem('cm_project_' + pj.id) || '{}');
+    var pivot = data.pivotData || {columns:[], cells:{}};
+    var total = 0;
+    pivot.columns.forEach(function(_, ci) {
+      PJ_INPUT_KEYS.forEach(function(k) { total += (pivot.cells[k + '_' + ci] || 0); });
+    });
+    var contractor = data['pj-contractor'] || '-';
+    var assigned = data.assignedStaff || [];
+    var assignedManager = assigned.filter(function(a){return (a.job||'').indexOf('소장')>=0;}).map(function(a){return a.name;}).join(', ');
+    var assignedAdmin = assigned.filter(function(a){return (a.job||'').indexOf('공무')>=0;}).map(function(a){return a.name;}).join(', ');
+    var manager = assignedManager || data['pj-site-manager'] || '-';
+    var admin = assignedAdmin || data['pj-site-admin'] || '-';
+    var startD = data['pj-start-date'] || '';
+    var endD = data['pj-end-date'] || '';
+    var remainText = '-', remainColor = 'var(--text3)';
+    if (isComp) {
+      remainText = pj.completedDate || '준공';
+      remainColor = '#2e7d32';
+    } else if (endD) {
+      var diff = Math.ceil((new Date(endD) - today) / 86400000);
+      remainText = diff >= 0 ? 'D-' + diff : 'D+' + Math.abs(diff);
+      remainColor = diff < 0 ? 'var(--danger)' : diff < 90 ? '#e67e22' : 'var(--accent)';
+    }
+    var completeBtn = isAdmin ? '<button onclick="event.stopPropagation();deleteProject(\'' + pj.id + '\')" style="border:none;background:none;color:' + (isComp ? '#2e7d32' : 'var(--text3)') + ';cursor:pointer;font-size:11px">' + (isComp ? '🔄취소' : '🏁준공') + '</button>' : '';
+    var actionTd = '<td style="text-align:center"><button onclick="event.stopPropagation();enterSiteFromProject(\'' + pj.id + '\')" style="border:none;background:none;color:var(--accent);cursor:pointer;font-size:11px;font-weight:700">▶ 진입</button> ' + completeBtn + '</td>';
+    return '<tr onclick="openProjectDetail(\'' + pj.id + '\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'
+      + '<td style="text-align:center;color:var(--text3);font-size:11px">' + num + '</td>'
+      + '<td style="font-size:12px;color:var(--text2)">' + contractor + '</td>'
+      + '<td style="font-weight:600;font-size:13px">' + (pj.name || '(이름 없음)') + '</td>'
+      + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + manager + '</td>'
+      + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + admin + '</td>'
+      + '<td style="text-align:right;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums">' + fmtAmt(total) + '</td>'
+      + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + (startD || '-') + '</td>'
+      + '<td style="text-align:center;font-size:12px;color:var(--text2)">' + (endD || '-') + '</td>'
+      + '<td style="text-align:center;font-weight:700;color:' + remainColor + ';font-size:12px">' + remainText + '</td>'
+      + actionTd
+      + '</tr>';
   }
 
 
@@ -7278,27 +7902,67 @@ window.cmsLogout=function(){
     document.getElementById('pj-del-pj-modal')?.remove();
     var list = getProjectList();
     var pj = list.find(function(p){ return p.id === id; });
+    var isCompleted = pj && pj.completed;
     var overlay = document.createElement('div');
     overlay.id = 'pj-del-pj-modal';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
-    overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">'
-      + '<div style="font-size:15px;font-weight:800;margin-bottom:12px">🗑 현장 삭제</div>'
-      + '<div style="font-size:13px;color:#6b7280;margin-bottom:18px"><b>' + (pj?.name||'') + '</b> 현장을 삭제하시겠습니까?<br>모든 데이터가 삭제됩니다.</div>'
-      + '<div style="display:flex;gap:8px;justify-content:center">'
-      + '<button onclick="document.getElementById(\'pj-del-pj-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
-      + '<button onclick="confirmDeleteProject(\'' + id + '\')" style="padding:8px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:700;cursor:pointer">삭제</button>'
-      + '</div></div>';
+    if (isCompleted) {
+      // 이미 준공된 현장 → 준공 취소
+      overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">'
+        + '<div style="font-size:15px;font-weight:800;margin-bottom:12px">🔄 준공 취소</div>'
+        + '<div style="font-size:13px;color:#6b7280;margin-bottom:18px"><b>' + (pj?.name||'') + '</b><br>준공 처리를 취소하시겠습니까?</div>'
+        + '<div style="display:flex;gap:8px;justify-content:center">'
+        + '<button onclick="document.getElementById(\'pj-del-pj-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">닫기</button>'
+        + '<button onclick="toggleProjectComplete(\'' + id + '\',false)" style="padding:8px 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">준공 취소</button>'
+        + '</div></div>';
+    } else {
+      // 준공 처리 - 준공년도 선택
+      var curYear = new Date().getFullYear();
+      var yearOpts = '';
+      for (var y = curYear; y >= curYear - 10; y--) {
+        yearOpts += '<option value="' + y + '">' + y + '년</option>';
+      }
+      overlay.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">'
+        + '<div style="font-size:15px;font-weight:800;margin-bottom:12px">🏁 준공 처리</div>'
+        + '<div style="font-size:13px;color:#6b7280;margin-bottom:12px"><b>' + (pj?.name||'') + '</b></div>'
+        + '<div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">준공 년도</label>'
+        + '<select id="pj-complete-year" class="form-select" style="width:160px;margin:0 auto;padding:7px 10px;font-size:13px">' + yearOpts + '</select></div>'
+        + '<div style="font-size:11px;color:var(--text3);margin-bottom:14px">※ 데이터는 모두 보존됩니다</div>'
+        + '<div style="display:flex;gap:8px;justify-content:center">'
+        + '<button onclick="document.getElementById(\'pj-del-pj-modal\').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;font-size:13px;cursor:pointer">취소</button>'
+        + '<button onclick="confirmProjectComplete(\'' + id + '\')" style="padding:8px 20px;border-radius:8px;border:none;background:#2e7d32;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🏁 준공 처리</button>'
+        + '</div></div>';
+    }
     document.body.appendChild(overlay);
     overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
   }
 
-  function confirmDeleteProject(id) {
+  function confirmProjectComplete(id) {
+    var year = document.getElementById('pj-complete-year')?.value || new Date().getFullYear();
     document.getElementById('pj-del-pj-modal')?.remove();
-    var list = getProjectList().filter(function(p){ return p.id !== id; });
-    saveProjectList(list);
-    localStorage.removeItem('cm_project_' + id);
+    var list = getProjectList();
+    var pj = list.find(function(p){ return p.id === id; });
+    if (pj) {
+      pj.completed = true;
+      pj.completedYear = String(year);
+      pj.completedDate = year + '-12-31';
+      saveProjectList(list);
+    }
     renderProjectList();
-    showToast('🗑 현장이 삭제되었습니다.', 'success');
+    showToast('🏁 ' + year + '년 준공 처리 완료', 'success');
+  }
+
+  function toggleProjectComplete(id, completed) {
+    document.getElementById('pj-del-pj-modal')?.remove();
+    var list = getProjectList();
+    var pj = list.find(function(p){ return p.id === id; });
+    if (pj) {
+      pj.completed = completed;
+      if (!completed) { pj.completedDate = ''; pj.completedYear = ''; }
+      saveProjectList(list);
+    }
+    renderProjectList();
+    showToast(completed ? '🏁 준공 처리 완료' : '🔄 준공 취소 완료', 'success');
   }
 
   function openProjectDetail(id) {
@@ -7340,6 +8004,130 @@ window.cmsLogout=function(){
       pjPivotData = { columns: [], cells: {} };
     }
     renderPjPivot();
+    // 현장 인력 배치 로드
+    renderProjectStaffTable();
+    populateStaffAddSelect();
+    populatePjStaffDatalist();
+  }
+
+  /* ===== 프로젝트 현장 인력 배치 ===== */
+  function getProjectAssignedStaff(pjId) {
+    var saved = JSON.parse(localStorage.getItem('cm_project_' + (pjId || currentProjectId)) || '{}');
+    return saved.assignedStaff || [];
+  }
+
+  function saveProjectAssignedStaff(list) {
+    if (!currentProjectId) return;
+    var saved = JSON.parse(localStorage.getItem('cm_project_' + currentProjectId) || '{}');
+    saved.assignedStaff = list;
+    localStorage.setItem('cm_project_' + currentProjectId, JSON.stringify(saved));
+  }
+
+  function populateStaffAddSelect() {
+    var sel = document.getElementById('pj-staff-add-select');
+    if (!sel) return;
+    var allStaff = getStaffList().filter(function(s) { return s.type === '현장' && s.status !== '퇴직'; });
+    var assigned = getProjectAssignedStaff();
+    var assignedNames = assigned.map(function(a) { return a.name; });
+    // 다른 프로젝트에 이미 배치된 사람 확인
+    var pjList = getProjectList();
+    var otherAssigned = {};
+    pjList.forEach(function(pj) {
+      if (pj.id === currentProjectId) return;
+      var as = getProjectAssignedStaff(pj.id);
+      as.forEach(function(a) { otherAssigned[a.name] = pj.name; });
+    });
+    sel.innerHTML = '<option value="">-- 배치할 직원 선택 --</option>';
+    allStaff.forEach(function(s, idx) {
+      if (assignedNames.indexOf(s.name) >= 0) return; // 이미 배치됨
+      var suffix = otherAssigned[s.name] ? ' (현재: ' + otherAssigned[s.name] + ')' : '';
+      sel.innerHTML += '<option value="' + idx + '">' + s.name + ' · ' + (s.job||'') + suffix + '</option>';
+    });
+  }
+
+  function syncManagerAdminFields() {
+    var assigned = getProjectAssignedStaff();
+    var managerEl = document.getElementById('pj-site-manager');
+    var adminEl = document.getElementById('pj-site-admin');
+    var managers = assigned.filter(function(a){return (a.job||'').indexOf('소장')>=0;}).map(function(a){return a.name;}).join(', ');
+    var admins = assigned.filter(function(a){return (a.job||'').indexOf('공무')>=0;}).map(function(a){return a.name;}).join(', ');
+    if (managerEl && managers) managerEl.value = managers;
+    if (adminEl && admins) adminEl.value = admins;
+  }
+
+  function addStaffToProject() {
+    var sel = document.getElementById('pj-staff-add-select');
+    var idx = sel?.value;
+    if (!idx && idx !== '0') { showToast('배치할 직원을 선택해주세요', 'error'); return; }
+    var allStaff = getStaffList().filter(function(s) { return s.type === '현장' && s.status !== '퇴직'; });
+    var s = allStaff[Number(idx)];
+    if (!s) return;
+    var assigned = getProjectAssignedStaff();
+    if (assigned.find(function(a){return a.name===s.name;})) { showToast('이미 배치된 직원입니다', 'error'); return; }
+    assigned.push({ name: s.name, job: s.job || '', wage: s.wage || '', phone: s.phone || '' });
+    saveProjectAssignedStaff(assigned);
+    renderProjectStaffTable();
+    populateStaffAddSelect();
+    populatePjStaffDatalist();
+    syncManagerAdminFields();
+    showToast('✅ ' + s.name + ' 배치 완료', 'success');
+  }
+
+  function removeStaffFromProject(idx) {
+    var assigned = getProjectAssignedStaff();
+    var name = assigned[idx]?.name || '';
+    assigned.splice(idx, 1);
+    saveProjectAssignedStaff(assigned);
+    renderProjectStaffTable();
+    populateStaffAddSelect();
+    populatePjStaffDatalist();
+    syncManagerAdminFields();
+    showToast('🗑 ' + name + ' 배치 해제', 'success');
+  }
+
+  function renderProjectStaffTable() {
+    var tbody = document.getElementById('pj-staff-tbody');
+    if (!tbody) return;
+    var assigned = getProjectAssignedStaff();
+    if (!assigned.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px;font-size:12px">배치된 인원이 없습니다</td></tr>';
+      return;
+    }
+    var f = function(v) { return v ? Number(v).toLocaleString() : '-'; };
+    tbody.innerHTML = assigned.map(function(a, i) {
+      return '<tr>'
+        + '<td style="text-align:center;font-weight:600">' + (a.name||'-') + '</td>'
+        + '<td style="text-align:center;font-size:12px">' + (a.job||'-') + '</td>'
+        + '<td style="text-align:right;font-size:12px">' + f(a.wage) + '</td>'
+        + '<td style="text-align:center;font-size:12px">' + (a.phone||'-') + '</td>'
+        + '<td style="text-align:center"><button onclick="removeStaffFromProject(' + i + ')" style="border:none;background:none;color:var(--danger);cursor:pointer;font-size:11px">해제</button></td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  // 소장/공무 datalist 채우기
+  function populatePjStaffDatalist() {
+    var assigned = getProjectAssignedStaff();
+    var workers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
+    // 소장 목록: 배치된 정규직 중 소장 + 노무관리 소장
+    var managerList = document.getElementById('pj-manager-list');
+    var adminList = document.getElementById('pj-admin-list');
+    if (managerList) {
+      var managers = assigned.filter(function(a){return (a.job||'').indexOf('소장')>=0;});
+      var wManagers = workers.filter(function(w){return (w.job||'')==='소장' && !(w.leaveDate && w.leaveDate.length>4);});
+      managerList.innerHTML = managers.map(function(m){return '<option value="'+m.name+'">';}).join('')
+        + wManagers.map(function(w){return '<option value="'+w.name+'">';}).join('');
+    }
+    if (adminList) {
+      var admins = assigned.filter(function(a){return (a.job||'').indexOf('공무')>=0;});
+      var wAdmins = workers.filter(function(w){return (w.job||'').indexOf('공무')>=0 && !(w.leaveDate && w.leaveDate.length>4);});
+      adminList.innerHTML = admins.map(function(a){return '<option value="'+a.name+'">';}).join('')
+        + wAdmins.map(function(w){return '<option value="'+w.name+'">';}).join('');
+    }
+  }
+
+  function filterPjStaffList(listId, keyword) {
+    // datalist는 브라우저가 자동 필터하므로 별도 처리 불필요
   }
 
   /* ===== 정규직 관리 ===== */
@@ -7385,6 +8173,18 @@ window.cmsLogout=function(){
         + '<option style="font-weight:900">소방기술자</option>';
       rankGroup.style.display = 'none';
       rankSel.value = '';
+    }
+    // 배치현장: 현장만
+    var siteGroup = document.getElementById('sf-site-group');
+    if (siteGroup) {
+      siteGroup.style.display = isHQ ? 'none' : '';
+      if (!isHQ) {
+        var siteSel = document.getElementById('sf-site-id');
+        var pjList = getProjectList();
+        siteSel.innerHTML = '<option value="">-- 현장 선택 --</option>' + pjList.map(function(pj) {
+          return '<option value="' + pj.id + '">' + (pj.name || '(이름없음)') + '</option>';
+        }).join('');
+      }
     }
     calcStaffPay();
     // 자가운전: 현장=고정 35만, 본사=수동입력
@@ -7577,6 +8377,9 @@ window.cmsLogout=function(){
         if (s.type) onStaffTypeChange(s.type);
         document.getElementById('sf-name').value = s.name || '';
         document.getElementById('sf-phone').value = s.phone || '';
+        if (s.type === '현장' && s.siteId) {
+          document.getElementById('sf-site-id').value = s.siteId;
+        }
         // 본사: sf-job=team, 현장: sf-job=job
         if (s.type === '본사') {
           document.getElementById('sf-job').value = s.team || '';
@@ -7634,6 +8437,7 @@ window.cmsLogout=function(){
       team: staffType === '본사' ? jobVal : '',
       job: staffType === '현장' ? jobVal : '',
       rank: staffType === '본사' ? document.getElementById('sf-rank').value : '',
+      siteId: staffType === '현장' ? (document.getElementById('sf-site-id')?.value || '') : '',
       wage: document.getElementById('sf-wage').value.replace(/[^\d]/g,''),
       carPay: staffType === '본사' ? (document.getElementById('sf-car-input').value.replace(/[^\d]/g,'') || '0') : '350000',
       spouse: document.getElementById('sf-spouse').value,
@@ -7747,6 +8551,318 @@ window.cmsLogout=function(){
   }
 
 
+  /* ===== 노무비 정산 ===== */
+  function initPayroll() {
+    var monthEl = document.getElementById('pr-month');
+    if (monthEl && !monthEl.value) {
+      var now = new Date();
+      monthEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+    // 현장 select 채우기
+    var siteSelect = document.getElementById('pr-site-select');
+    if (siteSelect) {
+      var pjList = getProjectList();
+      siteSelect.innerHTML = '<option value="">-- 현장 선택 --</option>' + pjList.map(function(pj) {
+        return '<option value="' + pj.id + '">' + (pj.name || '(이름없음)') + '</option>';
+      }).join('');
+    }
+    renderPayroll();
+  }
+
+  function renderPayroll() {
+    renderPayrollHQ();
+    renderPayrollSite();
+    renderPayrollInsurance();
+  }
+
+  function calcPayForStaff(s) {
+    var basic = Number(s.wage) || 0;
+    var isHQ = s.type === '본사';
+    var car = isHQ ? (Number(s.carPay) || 0) : 350000;
+    var meal = isHQ ? 0 : 200000;
+    var spouse = s.spouse === 'Y';
+    var children = Number(s.children) || 0;
+    var familyAmt = spouse ? (Number(s.familyAmt) || 0) : 0;
+    var childAmt = children * (Number(s.childAmt) || 0);
+    var allow = familyAmt + childAmt;
+    var gross = basic + car + meal + allow;
+    var taxable = gross - meal;
+    var pension = Math.round(taxable * 0.045);
+    var health = Math.round(taxable * 0.03545);
+    var longcare = Math.round(health * 0.1281);
+    var employ = Math.round(taxable * 0.009);
+    var ins4 = pension + health + longcare + employ;
+    var dep = Number(s.dependents) || 1;
+    var incomeTax = getSimpleTax(taxable, dep);
+    var localTax = Math.round(incomeTax * 0.1);
+    var funeral = (s.funeralYn !== 'N') ? 25000 : 0;
+    var totalDed = ins4 + incomeTax + localTax + funeral;
+    var net = gross - totalDed;
+    return { basic:basic, car:car, meal:meal, allow:allow, gross:gross, pension:pension, health:health, longcare:longcare, employ:employ, ins4:ins4, incomeTax:incomeTax, localTax:localTax, funeral:funeral, totalDed:totalDed, net:net, taxable:taxable };
+  }
+
+  function renderPayrollHQ() {
+    var tbody = document.getElementById('pr-hq-tbody');
+    var tfoot = document.getElementById('pr-hq-tfoot');
+    if (!tbody) return;
+    var staff = getStaffList().filter(function(s) { return s.type === '본사' && s.status !== '퇴직'; });
+    if (!staff.length) {
+      tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">본사 재직 직원이 없습니다</td></tr>';
+      if (tfoot) tfoot.style.display = 'none';
+      return;
+    }
+    var f = function(v) { return (v||0).toLocaleString(); };
+    var sums = {basic:0,car:0,allow:0,gross:0,ins:0,tax:0,local:0,funeral:0,ded:0,net:0};
+    tbody.innerHTML = staff.map(function(s) {
+      var c = calcPayForStaff(s);
+      sums.basic+=c.basic; sums.car+=c.car; sums.allow+=c.allow; sums.gross+=c.gross;
+      sums.ins+=c.ins4; sums.tax+=c.incomeTax; sums.local+=c.localTax; sums.funeral+=c.funeral;
+      sums.ded+=c.totalDed; sums.net+=c.net;
+      return '<tr>'
+        +'<td style="text-align:center;font-weight:600">'+(s.name||'-')+'</td>'
+        +'<td style="text-align:center;font-size:11px">'+(s.rank||'-')+'</td>'
+        +'<td style="text-align:center;font-size:11px">'+(s.team||'-')+'</td>'
+        +'<td style="text-align:right">'+f(c.basic)+'</td>'
+        +'<td style="text-align:right">'+f(c.car)+'</td>'
+        +'<td style="text-align:right">'+f(c.allow)+'</td>'
+        +'<td style="text-align:right;font-weight:700;color:#2e7d32">'+f(c.gross)+'</td>'
+        +'<td style="text-align:right">'+f(c.ins4)+'</td>'
+        +'<td style="text-align:right">'+f(c.incomeTax)+'</td>'
+        +'<td style="text-align:right">'+f(c.localTax)+'</td>'
+        +'<td style="text-align:right">'+f(c.funeral)+'</td>'
+        +'<td style="text-align:right;font-weight:700;color:#c62828">'+f(c.totalDed)+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:var(--accent)">'+f(c.net)+'</td>'
+        +'</tr>';
+    }).join('');
+    if (tfoot) {
+      tfoot.style.display = '';
+      document.getElementById('pr-hq-sum-basic').textContent = f(sums.basic);
+      document.getElementById('pr-hq-sum-car').textContent = f(sums.car);
+      document.getElementById('pr-hq-sum-allow').textContent = f(sums.allow);
+      document.getElementById('pr-hq-sum-gross').textContent = f(sums.gross);
+      document.getElementById('pr-hq-sum-ins').textContent = f(sums.ins);
+      document.getElementById('pr-hq-sum-tax').textContent = f(sums.tax);
+      document.getElementById('pr-hq-sum-local').textContent = f(sums.local);
+      document.getElementById('pr-hq-sum-funeral').textContent = f(sums.funeral);
+      document.getElementById('pr-hq-sum-ded').textContent = f(sums.ded);
+      document.getElementById('pr-hq-sum-net').textContent = f(sums.net);
+    }
+  }
+
+  function renderPayrollSite() {
+    var tbody = document.getElementById('pr-site-tbody');
+    var tfoot = document.getElementById('pr-site-tfoot');
+    if (!tbody) return;
+    var siteId = document.getElementById('pr-site-select')?.value;
+    if (!siteId) {
+      tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">현장을 선택해주세요</td></tr>';
+      if (tfoot) tfoot.style.display = 'none';
+      return;
+    }
+    var month = document.getElementById('pr-month')?.value || '';
+    var f = function(v) { return (v||0).toLocaleString(); };
+
+    // 정규직 현장인원
+    // 정규직 현장인원 (해당 프로젝트에 배치된 사람만)
+    var pjSaved = JSON.parse(localStorage.getItem('cm_project_' + siteId) || '{}');
+    var assignedNames = (pjSaved.assignedStaff || []).map(function(a){ return a.name; });
+    var siteStaff = getStaffList().filter(function(s) { return s.type === '현장' && s.status !== '퇴직' && assignedNames.indexOf(s.name) >= 0; });
+
+    // 일용직: 해당 현장의 근로자 + 출역 데이터
+    var oldSite = activeSiteId;
+    activeSiteId = siteId; // 임시 전환
+    var workers = getMergedWorkers();
+    var attendance = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
+    activeSiteId = oldSite; // 복원
+
+    // 해당 월의 출역 집계
+    var monthlyAtt = {}; // { 이름: { days: 공수합계, wage: 일당 } }
+    if (month) {
+      Object.keys(attendance).forEach(function(dateStr) {
+        if (dateStr.substring(0, 7) === month) {
+          var dayData = attendance[dateStr];
+          Object.keys(dayData).forEach(function(name) {
+            if (!monthlyAtt[name]) monthlyAtt[name] = { days: 0 };
+            monthlyAtt[name].days += Number(dayData[name]) || 0;
+          });
+        }
+      });
+    }
+
+    // 일용직 행 생성 (정규직은 제외 - 위에서 별도 처리)
+    var dailyRows = [];
+    workers.forEach(function(w) {
+      if (w.isStaff) return; // 정규직은 스킵 (정규직관리에서 처리)
+      if (w.leaveDate && w.leaveDate < month + '-01') return; // 퇴사자 제외
+      var att = monthlyAtt[w.name];
+      var days = att ? att.days : 0;
+      if (days === 0) return; // 출역 없으면 월급직/단가직 모두 제외
+
+      var wage = Number(w.wage) || 0;
+      var basic = 0;
+      if (w.empType === 'monthly') {
+        basic = wage; // 월급직
+      } else {
+        basic = Math.round(wage * days); // 일당 × 공수
+      }
+
+      // 4대보험 (간이)
+      var taxable = basic;
+      var pension = Math.round(taxable * 0.045);
+      var health = Math.round(taxable * 0.03545);
+      var longcare = Math.round(health * 0.1281);
+      var employ = Math.round(taxable * 0.009);
+      var ins4 = pension + health + longcare + employ;
+      // 소득세: 1년 이상 → 간이세액표, 1년 미만 → 일용직 원천징수 (일당-15만 초과분 2.7% + 지방세 0.27%)
+      var joinDate = w.joinDate ? new Date(w.joinDate) : null;
+      var monthEnd = month ? new Date(month + '-28') : new Date();
+      var workedMs = joinDate ? (monthEnd - joinDate) : 0;
+      var isOverOneYear = workedMs >= 365 * 86400000;
+      var incomeTax = 0, localTax = 0;
+      if (isOverOneYear) {
+        incomeTax = getSimpleTax(taxable, 1);
+        localTax = Math.round(incomeTax * 0.1);
+      } else if (days > 0) {
+        // 일용직 원천징수: (일당 - 15만원) 초과분 × 2.7%
+        var dailyWage = w.empType === 'monthly' ? Math.round(basic / days) : (Number(w.wage) || 0);
+        var dailyExcess = Math.max(dailyWage - 150000, 0);
+        var dailyTax = Math.round(dailyExcess * 0.027);
+        if (dailyTax < 1000) dailyTax = 0; // 소액부징수
+        incomeTax = dailyTax * Math.ceil(days);
+        localTax = Math.round(incomeTax * 0.1);
+      }
+      var totalDed = ins4 + incomeTax + localTax;
+      var net = basic - totalDed;
+      var empLabel = w.empType === 'monthly' ? '월급' : '일당';
+      var daysText = w.empType === 'monthly' ? '-' : days + '공수';
+
+      dailyRows.push({
+        type: empLabel,
+        name: w.name || '-',
+        job: w.job || '-',
+        basic: basic, car: 0, meal: 0, allow: 0,
+        gross: basic, ins4: ins4, incomeTax: incomeTax, localTax: localTax,
+        funeral: 0, totalDed: totalDed, net: net, daysText: daysText
+      });
+    });
+
+    var allRows = [];
+    var sums = {basic:0,car:0,meal:0,allow:0,gross:0,ins:0,tax:0,local:0,funeral:0,ded:0,net:0};
+
+    // 정규직 행
+    siteStaff.forEach(function(s) {
+      var c = calcPayForStaff(s);
+      sums.basic+=c.basic; sums.car+=c.car; sums.meal+=c.meal; sums.allow+=c.allow; sums.gross+=c.gross;
+      sums.ins+=c.ins4; sums.tax+=c.incomeTax; sums.local+=c.localTax; sums.funeral+=c.funeral;
+      sums.ded+=c.totalDed; sums.net+=c.net;
+      allRows.push('<tr style="background:#f0fdf4">'
+        +'<td style="text-align:center"><span class="badge badge-green">정규직</span></td>'
+        +'<td style="text-align:center;font-weight:600">'+(s.name||'-')+'</td>'
+        +'<td style="text-align:center;font-size:11px">'+(s.job||'-')+'</td>'
+        +'<td style="text-align:right">'+f(c.basic)+'</td>'
+        +'<td style="text-align:right">'+f(c.car)+'</td>'
+        +'<td style="text-align:right">'+f(c.meal)+'</td>'
+        +'<td style="text-align:right">'+f(c.allow)+'</td>'
+        +'<td style="text-align:right;font-weight:700;color:#2e7d32">'+f(c.gross)+'</td>'
+        +'<td style="text-align:right">'+f(c.ins4)+'</td>'
+        +'<td style="text-align:right">'+f(c.incomeTax)+'</td>'
+        +'<td style="text-align:right">'+f(c.localTax)+'</td>'
+        +'<td style="text-align:right">'+f(c.funeral)+'</td>'
+        +'<td style="text-align:right;font-weight:700;color:#c62828">'+f(c.totalDed)+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:var(--accent)">'+f(c.net)+'</td>'
+        +'</tr>');
+    });
+
+    // 일용직 행
+    dailyRows.forEach(function(r) {
+      sums.basic+=r.basic; sums.gross+=r.gross;
+      sums.ins+=r.ins4; sums.tax+=r.incomeTax; sums.local+=r.localTax;
+      sums.ded+=r.totalDed; sums.net+=r.net;
+      allRows.push('<tr>'
+        +'<td style="text-align:center"><span class="badge badge-blue">'+r.type+'</span> <span style="font-size:10px;color:var(--text3)">'+r.daysText+'</span></td>'
+        +'<td style="text-align:center;font-weight:600">'+r.name+'</td>'
+        +'<td style="text-align:center;font-size:11px">'+r.job+'</td>'
+        +'<td style="text-align:right">'+f(r.basic)+'</td>'
+        +'<td style="text-align:right;color:var(--text3)">-</td>'
+        +'<td style="text-align:right;color:var(--text3)">-</td>'
+        +'<td style="text-align:right;color:var(--text3)">-</td>'
+        +'<td style="text-align:right;font-weight:700;color:#2e7d32">'+f(r.gross)+'</td>'
+        +'<td style="text-align:right">'+f(r.ins4)+'</td>'
+        +'<td style="text-align:right">'+f(r.incomeTax)+'</td>'
+        +'<td style="text-align:right">'+f(r.localTax)+'</td>'
+        +'<td style="text-align:right;color:var(--text3)">-</td>'
+        +'<td style="text-align:right;font-weight:700;color:#c62828">'+f(r.totalDed)+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:var(--accent)">'+f(r.net)+'</td>'
+        +'</tr>');
+    });
+
+    if (!allRows.length) {
+      tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">해당 월에 정산 대상 인원이 없습니다<br><span style="font-size:11px">정규직 등록 또는 출역 관리에서 데이터를 확인하세요</span></td></tr>';
+      if (tfoot) tfoot.style.display = 'none';
+      return;
+    }
+
+    tbody.innerHTML = allRows.join('');
+    if (tfoot) {
+      tfoot.style.display = '';
+      tfoot.innerHTML = '<tr style="background:#fff9c4;font-weight:800"><td colspan="3" style="text-align:center">합계 ('+allRows.length+'명)</td>'
+        +'<td style="text-align:right">'+f(sums.basic)+'</td>'
+        +'<td style="text-align:right">'+f(sums.car)+'</td>'
+        +'<td style="text-align:right">'+f(sums.meal)+'</td>'
+        +'<td style="text-align:right">'+f(sums.allow)+'</td>'
+        +'<td style="text-align:right;color:#2e7d32">'+f(sums.gross)+'</td>'
+        +'<td style="text-align:right">'+f(sums.ins)+'</td>'
+        +'<td style="text-align:right">'+f(sums.tax)+'</td>'
+        +'<td style="text-align:right">'+f(sums.local)+'</td>'
+        +'<td style="text-align:right">'+f(sums.funeral)+'</td>'
+        +'<td style="text-align:right;color:#c62828">'+f(sums.ded)+'</td>'
+        +'<td style="text-align:right;color:var(--accent);font-size:13px">'+f(sums.net)+'</td></tr>';
+    }
+  }
+
+  function renderPayrollInsurance() {
+    var tbody = document.getElementById('pr-ins-tbody');
+    if (!tbody) return;
+    var allStaff = getStaffList().filter(function(s){ return s.status !== '퇴직'; });
+    if (!allStaff.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">등록된 직원이 없습니다</td></tr>';
+      return;
+    }
+    var totals = {pension:0,health:0,longcare:0,employ:0,taxable:0};
+    allStaff.forEach(function(s){
+      var c = calcPayForStaff(s);
+      totals.pension+=c.pension; totals.health+=c.health; totals.longcare+=c.longcare; totals.employ+=c.employ; totals.taxable+=c.taxable;
+    });
+    // 사업장 부담분
+    var bizPension = Math.round(totals.taxable * 0.045);
+    var bizHealth = Math.round(totals.taxable * 0.03545);
+    var bizLongcare = Math.round(bizHealth * 0.1281);
+    var bizEmploy = Math.round(totals.taxable * 0.0135);
+    var bizInjury = Math.round(totals.taxable * 0.019);
+    var f = function(v){return (v||0).toLocaleString();};
+    var rows = [
+      {name:'국민연금', worker:totals.pension, biz:bizPension, rate:'각 4.5%'},
+      {name:'건강보험', worker:totals.health, biz:bizHealth, rate:'각 3.545%'},
+      {name:'장기요양보험', worker:totals.longcare, biz:bizLongcare, rate:'건보의 12.81%'},
+      {name:'고용보험', worker:totals.employ, biz:bizEmploy, rate:'근로자 0.9% / 사업장 1.35%'},
+      {name:'산재보험', worker:0, biz:bizInjury, rate:'사업장 1.9% (건설업)'},
+    ];
+    tbody.innerHTML = rows.map(function(r){
+      return '<tr><td style="font-weight:600">'+r.name+'</td>'
+        +'<td style="text-align:right">'+f(r.worker)+'</td>'
+        +'<td style="text-align:right">'+f(r.biz)+'</td>'
+        +'<td style="text-align:right;font-weight:700">'+f(r.worker+r.biz)+'</td>'
+        +'<td style="text-align:center;font-size:11px;color:var(--text3)">'+r.rate+'</td></tr>';
+    }).join('');
+    // KPI
+    document.getElementById('pr-ins-pension').textContent = f(totals.pension + bizPension);
+    document.getElementById('pr-ins-health').textContent = f(totals.health + bizHealth + totals.longcare + bizLongcare);
+    document.getElementById('pr-ins-employ').textContent = f(totals.employ + bizEmploy);
+    document.getElementById('pr-ins-injury').textContent = f(bizInjury);
+  }
+
+  function exportPayrollPDF(type) { showToast('PDF 출력 기능은 추후 추가 예정입니다', 'info'); }
+
   /* ===== 프로젝트 개요 ===== */
   const PJ_FIELDS = ['pj-name','pj-site-name','pj-usage','pj-address','pj-start-date','pj-end-date',
     'pj-owner','pj-contractor','pj-owner-contact','pj-contractor-contact',
@@ -7769,7 +8885,8 @@ window.cmsLogout=function(){
 
   function saveProjectInfo() {
     if (!currentProjectId) { showToast('프로젝트를 선택해주세요', 'error'); return; }
-    const data = {};
+    // 기존 데이터 로드 (assignedStaff 등 보존)
+    const data = JSON.parse(localStorage.getItem('cm_project_' + currentProjectId) || '{}');
     PJ_FIELDS.forEach(id => {
       const el = document.getElementById(id);
       if (el) data[id] = el.value;
@@ -8289,7 +9406,7 @@ window.cmsLogout=function(){
       leader:'', startDate:'', endDate:'', rating:'' };
   }
 
-  let contractRows = JSON.parse(localStorage.getItem('cm_contract_rows') || 'null')
+  let contractRows = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || 'null')
     || CONTRACT_GONGJONG.map(gj => defaultRow(gj));
 
   function saveContractManual() {
@@ -8302,7 +9419,7 @@ window.cmsLogout=function(){
   }
 
   function saveContractToStorage() {
-    localStorage.setItem('cm_contract_rows', JSON.stringify(contractRows));
+    localStorage.setItem(siteKey('cm_contract_rows'), JSON.stringify(contractRows));
   }
 
   function initContract() {
@@ -8553,7 +9670,7 @@ window.cmsLogout=function(){
 
         // BUILDING_DATA 런타임 업데이트
         Object.assign(BUILDING_DATA, validBuildings);
-        localStorage.setItem('cm_building_data', JSON.stringify(BUILDING_DATA));
+        localStorage.setItem(siteKey('cm_building_data'), JSON.stringify(BUILDING_DATA));
         // BUILDING_LIST 업데이트
         BUILDING_LIST.length = 0;
         Object.keys(validBuildings).forEach(b => BUILDING_LIST.push(b));
@@ -8640,8 +9757,8 @@ window.cmsLogout=function(){
     const today = new Date().toISOString().split('T')[0];
 
     // localStorage에서 직접 읽고 직접 저장
-    const latestStatus = JSON.parse(localStorage.getItem('cm_cs_status') || '{}');
-    const att = JSON.parse(localStorage.getItem('cm_attendance') || '{}');
+    const latestStatus = JSON.parse(localStorage.getItem(siteKey('cm_cs_status')) || '{}');
+    const att = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
 
     Object.keys(latestStatus).forEach(function(b) {
       Object.keys(latestStatus[b] || {}).forEach(function(fl) {
@@ -8674,8 +9791,8 @@ window.cmsLogout=function(){
     });
 
     // localStorage 저장
-    localStorage.setItem('cm_attendance', JSON.stringify(att));
-    localStorage.setItem('cm_cs_status', JSON.stringify(latestStatus));
+    localStorage.setItem(siteKey('cm_attendance'), JSON.stringify(att));
+    localStorage.setItem(siteKey('cm_cs_status'), JSON.stringify(latestStatus));
 
     // 전역 변수 직접 교체
     window.attendance = att;
@@ -8730,8 +9847,8 @@ window.cmsLogout=function(){
     const daysInMonth = new Date(wlYear, wlMonth + 1, 0).getDate();
     const today = new Date().toISOString().split('T')[0];
     const ym = wlYear + '-' + String(wlMonth + 1).padStart(2, '0');
-    const allLogs = JSON.parse(localStorage.getItem('cm_worklogs') || '{}');
-    const attData = JSON.parse(localStorage.getItem('cm_attendance') || '{}');
+    const allLogs = JSON.parse(localStorage.getItem(siteKey('cm_worklogs')) || '{}');
+    const attData = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
 
     // KPI 집계
     var kpiDone = 0, kpiPartial = 0, kpiMissing = 0;
@@ -8808,7 +9925,7 @@ window.cmsLogout=function(){
     wlSelectedDate = date;
     var labelEl = document.getElementById('wl-date-label');
     if (labelEl) labelEl.textContent = date ? date.replace(/-/g, '.') : '';
-    const all = JSON.parse(localStorage.getItem('cm_worklogs') || '{}');
+    const all = JSON.parse(localStorage.getItem(siteKey('cm_worklogs')) || '{}');
     wlData = all[date] ? JSON.parse(JSON.stringify(all[date])) : {};
     renderWorklogTable();
   }
@@ -8827,9 +9944,9 @@ window.cmsLogout=function(){
       return;
     }
 
-    const all = JSON.parse(localStorage.getItem('cm_worklogs') || '{}');
+    const all = JSON.parse(localStorage.getItem(siteKey('cm_worklogs')) || '{}');
     all[wlSelectedDate] = JSON.parse(JSON.stringify(wlData));
-    localStorage.setItem('cm_worklogs', JSON.stringify(all));
+    localStorage.setItem(siteKey('cm_worklogs'), JSON.stringify(all));
     renderWlCalendar();
     showToast('✅ ' + wlSelectedDate + ' 작업일보 저장 완료!', 'success');
   }
@@ -8841,9 +9958,9 @@ window.cmsLogout=function(){
     const date = wlSelectedDate;
     if (!date) { showToast('날짜를 먼저 선택해주세요', 'error'); return; }
 
-    const csData = JSON.parse(localStorage.getItem('cm_cs_status') || '{}');
-    const teams  = JSON.parse(localStorage.getItem('cm_teams') || '[]');
-    const contracts = JSON.parse(localStorage.getItem('cm_contract_rows') || '[]');
+    const csData = JSON.parse(localStorage.getItem(siteKey('cm_cs_status')) || '{}');
+    const teams  = JSON.parse(localStorage.getItem(siteKey('cm_teams')) || '[]');
+    const contracts = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || '[]');
 
     // 해당 날짜에 완료된 공종/장소 수집
     const gjMap = {}; // gongjong → { locations: [], workers: [] }
@@ -8977,7 +10094,7 @@ window.cmsLogout=function(){
     const KEYS = ['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_meals'];
     const data = {};
     KEYS.forEach(k => {
-      const v = localStorage.getItem(k);
+      const v = localStorage.getItem(siteKey(k));
       if (v) { try { data[k] = JSON.parse(v); } catch(e) { data[k] = v; } }
     });
     const json = JSON.stringify(data, null, 2);
@@ -9003,7 +10120,7 @@ window.cmsLogout=function(){
         let count = 0;
         KEYS.forEach(k => {
           if (data[k] !== undefined) {
-            localStorage.setItem(k, JSON.stringify(data[k]));
+            localStorage.setItem(siteKey(k), JSON.stringify(data[k]));
             count++;
           }
         });
@@ -10511,8 +11628,8 @@ window.cmsLogout=function(){
 (function(){
   const LS_KEY='cm_expenses';
   const TYPE_KEYS={법인카드:'card',현금:'cash',세금계산서:'tax',본사집행분:'hq'};
-  function loadExp(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return[];}}
-  function saveExp(a){localStorage.setItem(LS_KEY,JSON.stringify(a));}
+  function loadExp(){try{return JSON.parse(localStorage.getItem(siteKey('cm_expenses'))||'[]');}catch(e){return[];}}
+  function saveExp(a){localStorage.setItem(siteKey('cm_expenses'),JSON.stringify(a));}
   function pa(s){return parseInt((s||'').replace(/[^\d]/g,''),10)||0;}
   function fa(n){return(n||0).toLocaleString();}
   function fk(n){if(n>=1e8)return(n/1e8).toFixed(1)+'억';if(n>=1e4)return Math.round(n/1e4).toLocaleString()+'만원';return fa(n)+'원';}
@@ -10724,18 +11841,529 @@ window.cmsLogout=function(){
     XLSX.writeFile(wb,'경비_'+new Date().toISOString().slice(0,10)+'.xlsx');showToast('✅ 다운로드','success');
   };
 
+  // 백업 앞에 자금청구 JS
+  /* ===== 자금청구 ===== */
+  window.initFund = function() {
+    var monthEl = document.getElementById('fund-month');
+    if (monthEl && !monthEl.value) {
+      var now = new Date();
+      monthEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+    renderFund();
+  }
+
+  function getFundKey() {
+    var month = document.getElementById('fund-month')?.value || '';
+    return 'cm_fund_' + (activeSiteId || '') + '_' + month;
+  }
+
+  function loadFundData() {
+    try { return JSON.parse(localStorage.getItem(getFundKey()) || '{}'); } catch(e) { return {}; }
+  }
+
+  window.saveFundData = function() {
+    // 소요자금 신청서 입력값 수집
+    var data = loadFundData();
+    var rows = document.querySelectorAll('#fund-detail-tbody tr[data-key]');
+    rows.forEach(function(tr) {
+      var key = tr.dataset.key;
+      var inputs = tr.querySelectorAll('input');
+      if (inputs.length >= 2) {
+        if (!data.detail) data.detail = {};
+        data.detail[key] = {
+          supply: Number((inputs[0].value||'0').replace(/[^\d]/g,'')) || 0,
+          vat: Number((inputs[1].value||'0').replace(/[^\d]/g,'')) || 0,
+          vendor: inputs[2]?.value || ''
+        };
+      }
+    });
+    localStorage.setItem(getFundKey(), JSON.stringify(data));
+    showToast('✅ 자금청구 데이터 저장 완료', 'success');
+    renderFund();
+  }
+
+  var FUND_CATEGORIES = [
+    { cat: '노무비', sub: '직영', vendor: '소장/공무/직영', proof: '노무비지급명세서' },
+    { cat: '노무비', sub: '용역', vendor: '', proof: '위임장' },
+    { cat: '노무비', sub: '골조', vendor: '', proof: '노무비지급명세서' },
+    { cat: '노무비', sub: '입선', vendor: '', proof: '노무비지급명세서' },
+    { cat: '노무비', sub: '조적/경량', vendor: '', proof: '' },
+    { cat: '노무비', sub: '석고', vendor: '', proof: '' },
+    { cat: '노무비', sub: '트레이', vendor: '', proof: '' },
+    { cat: '노무비', sub: '몰드바', vendor: '', proof: '' },
+    { cat: '노무비', sub: '세대분전반', vendor: '', proof: '' },
+    { cat: '노무비', sub: '강전포설', vendor: '', proof: '' },
+    { cat: '노무비', sub: '약전포설', vendor: '', proof: '' },
+    { cat: '노무비', sub: '배선기구', vendor: '', proof: '' },
+    { cat: '노무비', sub: '조명기구', vendor: '', proof: '' },
+    { cat: '설치/시운전비', sub: '[전기팀]', vendor: '', proof: '노무비지급명세서' },
+    { cat: '설치/시운전비', sub: '[통신팀]', vendor: '', proof: '' },
+    { cat: '설치/시운전비', sub: '[소방팀]', vendor: '', proof: '' },
+    { cat: '식대', sub: '직영', vendor: '', proof: '세금계산서' },
+    { cat: '현장경비', sub: '통신비', vendor: 'KT', proof: '본사집행' },
+    { cat: '현장경비', sub: '복합기', vendor: '캐논', proof: '본사집행' },
+    { cat: '현장경비', sub: '무인경비', vendor: '에스원', proof: '본사집행' },
+    { cat: '현장경비', sub: '숙소비', vendor: '', proof: '세금계산서' },
+    { cat: '현장경비', sub: '생수', vendor: '', proof: '세금계산서' },
+    { cat: '현장경비', sub: '지게차', vendor: '', proof: '세금계산서' },
+    { cat: '현장경비', sub: '리프트', vendor: '', proof: '세금계산서' },
+    { cat: '현장경비', sub: '글삭기', vendor: '', proof: '세금계산서' },
+    { cat: '현장경비', sub: '배치전검사', vendor: '', proof: '전자계산서' },
+    { cat: '현장경비', sub: '운영비', vendor: '', proof: '품의서' },
+    { cat: '현장경비', sub: '전도금', vendor: '', proof: '법인카드' },
+    { cat: '현장경비', sub: '기타', vendor: '', proof: '' },
+  ];
+
+  window.renderFund = function() {
+    renderFundDetail();
+    renderFundSummary();
+    renderFundApproval();
+    renderFundContract();
+  }
+
+  window.renderFundDetail = function() {
+    var tbody = document.getElementById('fund-detail-tbody');
+    if (!tbody) return;
+    var month = document.getElementById('fund-month')?.value || '';
+    if (!month) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3)">청구월을 선택해주세요</td></tr>'; return; }
+    var f = function(v) { return v ? Number(v).toLocaleString() : '-'; };
+
+    // ── 1. 노무비 취합 ──
+    // 정규직 (현장 배치)
+    var pjSaved = JSON.parse(localStorage.getItem('cm_project_' + activeSiteId) || '{}');
+    var assignedNames = (pjSaved.assignedStaff || []).map(function(a){ return a.name; });
+    var siteStaff = getStaffList().filter(function(s) {
+      return s.type === '현장' && s.status !== '퇴직' && assignedNames.indexOf(s.name) >= 0;
+    });
+    var staffTotal = 0;
+    siteStaff.forEach(function(s) { var c = calcPayForStaff(s); staffTotal += c.gross; });
+
+    // 일용직 (출역 기반)
+    var workers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
+    var attendance = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
+    var monthlyAtt = {};
+    Object.keys(attendance).forEach(function(dateStr) {
+      if (dateStr.substring(0, 7) === month) {
+        var dayData = attendance[dateStr];
+        Object.keys(dayData).forEach(function(name) {
+          if (!monthlyAtt[name]) monthlyAtt[name] = 0;
+          monthlyAtt[name] += Number(dayData[name]) || 0;
+        });
+      }
+    });
+
+    // 공종별 노무비 집계
+    var laborByGongjong = {};
+    workers.forEach(function(w) {
+      if (w.isStaff) return;
+      var days = monthlyAtt[w.name] || 0;
+      if (days === 0) return;
+      var wage = Number(w.wage) || 0;
+      var pay = w.empType === 'monthly' ? wage : Math.round(wage * days);
+      var gj = w.gongjong || w.job || '기타';
+      if (!laborByGongjong[gj]) laborByGongjong[gj] = 0;
+      laborByGongjong[gj] += pay;
+    });
+
+    // ── 2. 식대 취합 ──
+    var meals = JSON.parse(localStorage.getItem(siteKey('cm_meals')) || '{}');
+    var restaurants = JSON.parse(localStorage.getItem(siteKey('cm_restaurants')) || '[]');
+    var defaultPrices = { b: 6000, l: 8000, d: 10000 };
+    if (restaurants.length) {
+      defaultPrices.b = Number(restaurants[0].bp) || 6000;
+      defaultPrices.l = Number(restaurants[0].lp) || 8000;
+      defaultPrices.d = Number(restaurants[0].dp) || 10000;
+    }
+    var mealTotal = 0;
+    Object.keys(meals).forEach(function(dateStr) {
+      if (dateStr.substring(0, 7) !== month) return;
+      var dayMeals = meals[dateStr];
+      Object.keys(dayMeals).forEach(function(nm) {
+        var m = dayMeals[nm]; if (!m) return;
+        if (m.b) mealTotal += defaultPrices.b;
+        if (m.l) mealTotal += defaultPrices.l;
+        if (m.d) mealTotal += defaultPrices.d;
+      });
+    });
+
+    // ── 3. 경비 취합 ──
+    var expenses = JSON.parse(localStorage.getItem(siteKey('cm_expenses')) || '[]');
+    var monthExp = expenses.filter(function(d) { return d.date && d.date.startsWith(month); });
+    var expByUsage = {};
+    var expHQ = 0; // 본사집행분
+    monthExp.forEach(function(d) {
+      var key = d.usage || d.desc || '기타';
+      var total = (d.amount || 0) + (d.vat || 0);
+      if (d.type === '본사집행분') {
+        if (!expByUsage[key]) expByUsage[key] = { supply: 0, vat: 0, vendor: d.vendor || '', proof: '본사집행' };
+        expByUsage[key].supply += (d.amount || 0);
+        expByUsage[key].vat += (d.vat || 0);
+      } else {
+        var proof = d.type || '';
+        if (!expByUsage[key]) expByUsage[key] = { supply: 0, vat: 0, vendor: d.vendor || '', proof: proof };
+        expByUsage[key].supply += (d.amount || 0);
+        expByUsage[key].vat += (d.vat || 0);
+      }
+    });
+
+    // ── HTML 생성 ──
+    var html = '';
+    var grandSupply = 0, grandVat = 0;
+    var bd = 'border:1px solid #ddd;padding:7px 10px;';
+    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;';
+    var subBd = 'border:1px solid #bbb;padding:7px 10px;background:#f5f5f5;font-weight:800;';
+
+    // 현장명 표시
+    var siteNameEl = document.getElementById('fund-site-name');
+    if (siteNameEl) {
+      var pjList = getProjectList();
+      var pj = pjList.find(function(p){return p.id===activeSiteId;});
+      siteNameEl.textContent = pj ? '현장명 : ' + pj.name : '';
+    }
+
+    // 노무비 - 직영 (정규직)
+    var gjKeys = Object.keys(laborByGongjong);
+    var laborRowCount = gjKeys.length + 1;
+    if (!gjKeys.length) laborRowCount = 2;
+
+    html += '<tr><td style="' + bd + '"><b>노무비</b> · 직영 (정규직)</td><td style="' + bd + 'font-size:11px;color:#666">소장/공무/직영</td>';
+    html += '<td style="' + bdR + '">' + f(staffTotal) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(staffTotal) + '</td>';
+    html += '<td style="' + bd + 'font-size:10px;color:#888">노무비지급명세서</td></tr>';
+    grandSupply += staffTotal;
+
+    if (!gjKeys.length) {
+      html += '<tr><td style="' + bd + 'color:#aaa;font-size:11px;padding-left:24px">출역 없음</td><td style="' + bd + '"></td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bd + '"></td></tr>';
+    }
+    gjKeys.forEach(function(gj) {
+      var amt = laborByGongjong[gj];
+      grandSupply += amt;
+      html += '<tr><td style="' + bd + 'font-size:11px;padding-left:24px">' + gj + '</td><td style="' + bd + 'font-size:11px"></td>';
+      html += '<td style="' + bdR + '">' + f(amt) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(amt) + '</td>';
+      html += '<td style="' + bd + 'font-size:10px;color:#888">노무비지급명세서</td></tr>';
+    });
+
+    // 노무비 소계
+    var laborTotal = staffTotal + gjKeys.reduce(function(s, k) { return s + laborByGongjong[k]; }, 0);
+    html += '<tr><td style="' + subBd + 'text-align:center">소 계</td><td style="' + subBd + '"></td>';
+    html += '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(laborTotal) + '</td><td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(laborTotal) + '</td><td style="' + subBd + '"></td></tr>';
+
+    // 식대
+    html += '<tr><td style="' + bd + '"><b>식대</b> · 직영</td><td style="' + bd + 'font-size:11px"></td>';
+    html += '<td style="' + bdR + '">' + f(mealTotal) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(mealTotal) + '</td>';
+    html += '<td style="' + bd + 'font-size:10px;color:#888">세금계산서</td></tr>';
+    grandSupply += mealTotal;
+
+    // 식대 소계
+    html += '<tr><td style="' + subBd + 'text-align:center">소 계</td><td style="' + subBd + '"></td>';
+    html += '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(mealTotal) + '</td><td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(mealTotal) + '</td><td style="' + subBd + '"></td></tr>';
+
+    // ── 현장경비 ──
+    var expCard = { supply: 0, vat: 0 };
+    var expCash = { supply: 0, vat: 0 };
+    var expTax = [];
+    var expHQ = { supply: 0, vat: 0 };
+    monthExp.forEach(function(d) {
+      var s = d.amount || 0, v = d.vat || 0;
+      if (d.type === '법인카드') { expCard.supply += s; expCard.vat += v; }
+      else if (d.type === '현금' || d.type === '전도금') { expCash.supply += s; expCash.vat += v; }
+      else if (d.type === '세금계산서') { expTax.push({ usage: d.usage || d.desc || '-', vendor: d.vendor || '', supply: s, vat: v }); }
+      else if (d.type === '본사집행분') { expHQ.supply += s; expHQ.vat += v; }
+    });
+
+    var expRows = [];
+    if (expCard.supply + expCard.vat > 0) expRows.push({ label: '<b>현장경비</b> · 법인카드', vendor: '1식', supply: expCard.supply, vat: expCard.vat, proof: '법인카드' });
+    if (expCash.supply + expCash.vat > 0) expRows.push({ label: (expRows.length ? '' : '<b>현장경비</b> · ') + '현금/전도금', vendor: '1식', supply: expCash.supply, vat: expCash.vat, proof: '지출증빙' });
+    expTax.forEach(function(t, i) {
+      var prefix = (!expRows.length && i === 0) ? '<b>현장경비</b> · ' : '';
+      expRows.push({ label: prefix + t.usage, vendor: t.vendor, supply: t.supply, vat: t.vat, proof: '세금계산서' });
+    });
+    if (expHQ.supply + expHQ.vat > 0) expRows.push({ label: (expRows.length ? '' : '<b>현장경비</b> · ') + '본사집행분', vendor: '1식', supply: expHQ.supply, vat: expHQ.vat, proof: '본사집행' });
+
+    if (expRows.length) {
+      var expSupplyTotal = 0, expVatTotal = 0;
+      expRows.forEach(function(r, i) {
+        var total = r.supply + r.vat;
+        expSupplyTotal += r.supply; expVatTotal += r.vat;
+        grandSupply += r.supply; grandVat += r.vat;
+        html += '<tr><td style="' + bd + 'font-size:11px;' + (i > 0 ? 'padding-left:24px' : '') + '">' + r.label + '</td><td style="' + bd + 'font-size:11px;color:#666">' + r.vendor + '</td>';
+        html += '<td style="' + bdR + '">' + f(r.supply) + '</td><td style="' + bdR + '">' + f(r.vat) + '</td><td style="' + bdR + 'font-weight:700">' + f(total) + '</td>';
+        html += '<td style="' + bd + 'font-size:10px;color:#888">' + r.proof + '</td></tr>';
+      });
+      html += '<tr><td style="' + subBd + 'text-align:center">소 계</td><td style="' + subBd + '"></td>';
+      html += '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(expSupplyTotal) + '</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(expVatTotal) + '</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(expSupplyTotal + expVatTotal) + '</td><td style="' + subBd + '"></td></tr>';
+    } else {
+      html += '<tr><td style="' + bd + 'font-weight:800"><b>현장경비</b></td><td colspan="5" style="' + bd + 'color:#aaa;font-size:11px;text-align:center;padding:12px">해당 월 경비 데이터 없음</td></tr>';
+    }
+
+    // 합계
+    var grandTotal = grandSupply + grandVat;
+    html += '<tr><td colspan="2" style="border:1.5px solid #999;padding:10px;background:#eee;text-align:center;font-weight:900;font-size:13px">합 계</td>';
+    html += '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-size:13px;font-variant-numeric:tabular-nums">' + f(grandSupply) + '</td>';
+    html += '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-variant-numeric:tabular-nums">' + f(grandVat) + '</td>';
+    html += '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-size:14px;color:#c62828;font-variant-numeric:tabular-nums">' + f(grandTotal) + '</td>';
+    html += '<td style="border:1.5px solid #999;padding:10px;background:#eee"></td></tr>';
+
+    tbody.innerHTML = html;
+  }
+
+  window.renderFundSummary = function() {
+    var tbody = document.getElementById('fund-summary-tbody');
+    if (!tbody) return;
+    var month = document.getElementById('fund-month')?.value || '';
+    var f = function(v) { return v ? Number(v).toLocaleString() : '-'; };
+
+    // 데이터 취합 (renderFundDetail과 동일 로직)
+    var pjSaved = JSON.parse(localStorage.getItem('cm_project_' + activeSiteId) || '{}');
+    var assignedNames = (pjSaved.assignedStaff || []).map(function(a){ return a.name; });
+    var siteStaff = getStaffList().filter(function(s) {
+      return s.type === '현장' && s.status !== '퇴직' && assignedNames.indexOf(s.name) >= 0;
+    });
+    var staffTotal = 0;
+    siteStaff.forEach(function(s) { var c = calcPayForStaff(s); staffTotal += c.gross; });
+
+    var workers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
+    var attendance = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
+    var laborDaily = 0;
+    var monthlyAtt = {};
+    Object.keys(attendance).forEach(function(dateStr) {
+      if (dateStr.substring(0, 7) === month) {
+        var dayData = attendance[dateStr];
+        Object.keys(dayData).forEach(function(name) {
+          if (!monthlyAtt[name]) monthlyAtt[name] = 0;
+          monthlyAtt[name] += Number(dayData[name]) || 0;
+        });
+      }
+    });
+    workers.forEach(function(w) {
+      if (w.isStaff) return;
+      var days = monthlyAtt[w.name] || 0;
+      if (days === 0) return;
+      laborDaily += w.empType === 'monthly' ? (Number(w.wage) || 0) : Math.round((Number(w.wage) || 0) * days);
+    });
+    var laborTotal = staffTotal + laborDaily;
+
+    var meals = JSON.parse(localStorage.getItem(siteKey('cm_meals')) || '{}');
+    var restaurants = JSON.parse(localStorage.getItem(siteKey('cm_restaurants')) || '[]');
+    var dp = { b: 6000, l: 8000, d: 10000 };
+    if (restaurants.length) { dp.b = Number(restaurants[0].bp)||6000; dp.l = Number(restaurants[0].lp)||8000; dp.d = Number(restaurants[0].dp)||10000; }
+    var mealTotal = 0;
+    Object.keys(meals).forEach(function(dk) {
+      if (dk.substring(0, 7) !== month) return;
+      var dm = meals[dk];
+      Object.keys(dm).forEach(function(nm) { var m = dm[nm]; if (!m) return; if (m.b) mealTotal += dp.b; if (m.l) mealTotal += dp.l; if (m.d) mealTotal += dp.d; });
+    });
+
+    var expenses = JSON.parse(localStorage.getItem(siteKey('cm_expenses')) || '[]');
+    var expTotal = 0, expVat = 0;
+    expenses.filter(function(d) { return d.date && d.date.startsWith(month); }).forEach(function(d) { expTotal += (d.amount || 0); expVat += (d.vat || 0); });
+
+    var rows = [
+      { name: '자재비', current: 0 },
+      { name: '설치/시운전비', current: 0 },
+      { name: '소 계 ( 자재비 )', isSub: true, val: 0 },
+      { name: '노무비', current: laborTotal },
+      { name: '식대', current: mealTotal },
+      { name: '현장경비', current: expTotal + expVat },
+      { name: '소 계 ( 노임/경비 )', isSub: true, val: laborTotal + mealTotal + expTotal + expVat },
+      { name: '사회보험', current: 0 },
+      { name: '매입세', current: 0 },
+      { name: '본사경비', current: 0 },
+      { name: '본사관리비(7%)', current: 0 },
+    ];
+    var grand = laborTotal + mealTotal + expTotal + expVat;
+    var bd = 'border:1px solid #ddd;padding:7px 10px;';
+    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;';
+    var subBd = 'border:1px solid #bbb;padding:7px 10px;background:#f5f5f5;font-weight:800;';
+    var html = rows.map(function(r) {
+      if (r.isSub) {
+        return '<tr><td style="' + subBd + 'text-align:center">' + r.name + '</td>'
+          + '<td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right">-</td>'
+          + '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(r.val) + '</td>'
+          + '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(r.val) + '</td><td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right">-</td></tr>';
+      }
+      var hasVal = r.current > 0;
+      return '<tr><td style="' + bd + 'font-weight:600">' + r.name + '</td>'
+        + '<td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'color:#aaa">-</td>'
+        + '<td style="' + bdR + (hasVal ? 'font-weight:700' : 'color:#aaa') + '">' + f(r.current) + '</td>'
+        + '<td style="' + bdR + (hasVal ? '' : 'color:#aaa') + '">' + f(r.current) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + '">0.0%</td></tr>';
+    }).join('');
+    html += '<tr><td style="border:1.5px solid #999;padding:10px;background:#eee;text-align:center;font-weight:900;font-size:13px">합 계</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-size:14px;color:#c62828;font-variant-numeric:tabular-nums">' + f(grand) + '</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;color:#c62828;font-variant-numeric:tabular-nums">' + f(grand) + '</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
+      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">0.0%</td></tr>';
+    tbody.innerHTML = html;
+  }
+
+  window.renderFundApproval = function() {
+    var month = document.getElementById('fund-month')?.value || '';
+    var yr = month.substring(0, 4);
+    var mo = month.substring(5, 7);
+    var f = function(v) { return v ? Number(v).toLocaleString() : '-'; };
+
+    var titleEl = document.getElementById('fund-appr-title');
+    var monthText = document.getElementById('fund-appr-month-text');
+    var dateEl = document.getElementById('fund-appr-date');
+    if (titleEl) titleEl.textContent = yr + '년 ' + mo + '월 소요자금 신청의 건';
+    if (monthText) monthText.textContent = yr + '년 ' + mo + '월';
+    if (dateEl) dateEl.textContent = yr + '년 ' + mo + '월';
+
+    var pjData = JSON.parse(localStorage.getItem('cm_project_' + activeSiteId) || '{}');
+    var assigned = pjData.assignedStaff || [];
+    var manager = assigned.filter(function(a){return (a.job||'').indexOf('소장')>=0;}).map(function(a){return a.name;}).join(', ');
+    var managerEl = document.getElementById('fund-appr-manager');
+    if (managerEl) managerEl.textContent = manager || '-';
+    var writerEl = document.getElementById('fund-appr-writer');
+    if (writerEl) writerEl.textContent = '소장 ' + (manager || '-');
+
+    // 자동 취합 데이터
+    var assignedNames = assigned.map(function(a){ return a.name; });
+    var siteStaff = getStaffList().filter(function(s) {
+      return s.type === '현장' && s.status !== '퇴직' && assignedNames.indexOf(s.name) >= 0;
+    });
+    var staffTotal = 0;
+    siteStaff.forEach(function(s) { var c = calcPayForStaff(s); staffTotal += c.gross; });
+
+    var workers = JSON.parse(localStorage.getItem(siteKey('cm_workers')) || '[]');
+    var attendance = JSON.parse(localStorage.getItem(siteKey('cm_attendance')) || '{}');
+    var laborDaily = 0;
+    var monthlyAtt = {};
+    Object.keys(attendance).forEach(function(dk) {
+      if (dk.substring(0, 7) === month) { var dd = attendance[dk]; Object.keys(dd).forEach(function(nm) { if (!monthlyAtt[nm]) monthlyAtt[nm] = 0; monthlyAtt[nm] += Number(dd[nm]) || 0; }); }
+    });
+    workers.forEach(function(w) {
+      if (w.isStaff) return; var days = monthlyAtt[w.name] || 0; if (days === 0) return;
+      laborDaily += w.empType === 'monthly' ? (Number(w.wage) || 0) : Math.round((Number(w.wage) || 0) * days);
+    });
+    var laborTotal = staffTotal + laborDaily;
+
+    var meals = JSON.parse(localStorage.getItem(siteKey('cm_meals')) || '{}');
+    var restaurants = JSON.parse(localStorage.getItem(siteKey('cm_restaurants')) || '[]');
+    var dp = { b: 6000, l: 8000, d: 10000 };
+    if (restaurants.length) { dp.b = Number(restaurants[0].bp)||6000; dp.l = Number(restaurants[0].lp)||8000; dp.d = Number(restaurants[0].dp)||10000; }
+    var mealTotal = 0;
+    Object.keys(meals).forEach(function(dk) {
+      if (dk.substring(0, 7) !== month) return;
+      var dm = meals[dk]; Object.keys(dm).forEach(function(nm) { var m = dm[nm]; if (!m) return; if (m.b) mealTotal += dp.b; if (m.l) mealTotal += dp.l; if (m.d) mealTotal += dp.d; });
+    });
+
+    var expenses = JSON.parse(localStorage.getItem(siteKey('cm_expenses')) || '[]');
+    var expSupply = 0, expVat = 0;
+    expenses.filter(function(d) { return d.date && d.date.startsWith(month); }).forEach(function(d) { expSupply += (d.amount || 0); expVat += (d.vat || 0); });
+
+    var tbody = document.getElementById('fund-appr-tbody');
+    if (!tbody) return;
+    var items = [
+      { name: '노무비', supply: laborTotal, vat: 0 },
+      { name: '설치/시운전비', supply: 0, vat: 0 },
+      { name: '식대', supply: mealTotal, vat: 0 },
+      { name: '현장경비', supply: expSupply, vat: expVat },
+    ];
+    var gS = 0, gV = 0;
+    var html = items.map(function(it) {
+      gS += it.supply; gV += it.vat;
+      return '<tr><td style="border:1px solid var(--border);padding:8px;text-align:center">' + it.name + '</td>'
+        + '<td style="border:1px solid var(--border);padding:8px;text-align:right">' + f(it.supply) + '</td>'
+        + '<td style="border:1px solid var(--border);padding:8px;text-align:right">' + f(it.vat) + '</td>'
+        + '<td style="border:1px solid var(--border);padding:8px;text-align:right;font-weight:600">' + f(it.supply + it.vat) + '</td>'
+        + '<td style="border:1px solid var(--border);padding:8px"></td></tr>';
+    }).join('');
+    html += '<tr style="font-weight:800"><td style="border:1px solid var(--border);padding:8px;text-align:center">합 계</td>'
+      + '<td style="border:1px solid var(--border);padding:8px;text-align:right">' + f(gS) + '</td>'
+      + '<td style="border:1px solid var(--border);padding:8px;text-align:right">' + f(gV) + '</td>'
+      + '<td style="border:1px solid var(--border);padding:8px;text-align:right;color:var(--danger);font-size:14px">' + f(gS + gV) + '</td>'
+      + '<td style="border:1px solid var(--border);padding:8px"></td></tr>';
+    tbody.innerHTML = html;
+  }
+
+  window.renderFundContract = function() {
+    var thead = document.getElementById('fund-contract-thead');
+    var tbody = document.getElementById('fund-contract-tbody');
+    if (!thead || !tbody) return;
+
+    var pjData = JSON.parse(localStorage.getItem('cm_project_' + activeSiteId) || '{}');
+    var pivot = pjData.pivotData || { columns: [], cells: {} };
+    var cols = pivot.columns || [];
+    var f = function(v) { return v ? Number(v).toLocaleString() : '-'; };
+    var bd = 'border:1px solid #ddd;padding:7px 10px;';
+    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;';
+
+    if (!cols.length) {
+      thead.innerHTML = '';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3);font-size:12px">프로젝트 관리 → 도급현황에서 계약 데이터를 입력해주세요</td></tr>';
+      return;
+    }
+
+    // 헤더
+    var hdr1 = '<tr><th rowspan="2" style="' + bd + 'background:#f5f5f5;font-weight:800;text-align:center;min-width:120px">구 분</th>';
+    cols.forEach(function(c) { hdr1 += '<th style="' + bd + 'background:#f5f5f5;font-weight:700;text-align:center;min-width:100px">' + (c.type || '') + '</th>'; });
+    hdr1 += '<th rowspan="2" style="' + bd + 'background:#f5f5f5;font-weight:800;text-align:right;min-width:110px">최종금액</th>';
+    hdr1 += '<th rowspan="2" style="' + bd + 'background:#f5f5f5;font-weight:800;text-align:right;min-width:70px">증감률</th></tr>';
+    var hdr2 = '<tr>';
+    cols.forEach(function(c) { hdr2 += '<th style="' + bd + 'background:#fafafa;font-size:11px;text-align:center">' + (c.date || '') + '</th>'; });
+    hdr2 += '</tr>';
+    thead.innerHTML = hdr1 + hdr2;
+
+    // 행
+    var ROWS = [
+      { key: 'material', label: '자재비' },
+      { key: 'labor', label: '노무비/경비' },
+      { key: 'ind_injury', label: '사회보험' },
+      { key: 'purchase_tax', label: '매입세' }
+    ];
+    var html = '';
+    var colTotals = cols.map(function() { return 0; });
+    var grandTotal = 0;
+
+    ROWS.forEach(function(row) {
+      html += '<tr><td style="' + bd + 'font-weight:600">' + row.label + '</td>';
+      var rowTotal = 0;
+      cols.forEach(function(c, ci) {
+        var val = pivot.cells[row.key + '_' + ci] || 0;
+        rowTotal += val; colTotals[ci] += val;
+        html += '<td style="' + bdR + '">' + f(val) + '</td>';
+      });
+      grandTotal += rowTotal;
+      var initial = pivot.cells[row.key + '_0'] || 0;
+      var pct = initial ? ((rowTotal / initial - 1) * 100).toFixed(1) + '%' : '-';
+      html += '<td style="' + bdR + 'font-weight:700">' + f(rowTotal) + '</td>';
+      html += '<td style="' + bdR + '">' + pct + '</td></tr>';
+    });
+
+    // 합계
+    html += '<tr style="font-weight:800"><td style="' + bd + 'background:#eee;text-align:center">합 계</td>';
+    var grandInitial = colTotals[0] || 0;
+    cols.forEach(function(c, ci) {
+      html += '<td style="' + bdR + 'background:#eee">' + f(colTotals[ci]) + '</td>';
+    });
+    var grandPct = grandInitial ? ((grandTotal / grandInitial - 1) * 100).toFixed(1) + '%' : '-';
+    html += '<td style="' + bdR + 'background:#eee;color:#c62828;font-size:13px">' + f(grandTotal) + '</td>';
+    html += '<td style="' + bdR + 'background:#eee">' + grandPct + '</td></tr>';
+    tbody.innerHTML = html;
+  }
+
   // 백업
   window.exportData=function(){
-    var KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_expenses','cm_meals','cm_restaurants'];
-    var data={};KEYS.forEach(k=>{var v=localStorage.getItem(k);if(v){try{data[k]=JSON.parse(v);}catch(e){data[k]=v;}}});
+    var BASE_KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_expenses','cm_meals','cm_restaurants'];
+    var data={};
+    // 프로젝트별 데이터
+    var pjList=JSON.parse(localStorage.getItem('cm_projects')||'[]');
+    data['cm_projects']=pjList;
+    data['cm_staff']=JSON.parse(localStorage.getItem('cm_staff')||'[]');
+    pjList.forEach(function(pj){
+      var pjData=localStorage.getItem('cm_project_'+pj.id);if(pjData)data['cm_project_'+pj.id]=JSON.parse(pjData);
+      BASE_KEYS.forEach(function(k){var v=localStorage.getItem(k+'_'+pj.id);if(v){try{data[k+'_'+pj.id]=JSON.parse(v);}catch(e){data[k+'_'+pj.id]=v;}}});
+    });
     var a=document.createElement('a');a.href='data:application/json;base64,'+btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(data,null,2))));
     a.download='백업_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);showToast('✅ 백업 완료','success');
   };
   window.importData=function(event){
     var file=event.target.files[0];if(!file)return;var r=new FileReader();
     r.onload=function(e){try{var data=JSON.parse(e.target.result);
-    var KEYS=['cm_workers','cm_teams','cm_attendance','cm_cs_status','cm_contract_rows','cm_worklogs','cm_building_data','cm_project_info','cm_expenses','cm_meals','cm_restaurants'];
-    var c=0;KEYS.forEach(k=>{if(data[k]!==undefined){localStorage.setItem(k,JSON.stringify(data[k]));c++;}});
+    var c=0;Object.keys(data).forEach(function(k){localStorage.setItem(k,JSON.stringify(data[k]));c++;});
     showToast('✅ '+c+'개 복원!','success');setTimeout(()=>location.reload(),1500);
     }catch(err){showToast('❌ 형식 오류','error');}};r.readAsText(file);event.target.value='';
   };
@@ -10756,12 +12384,12 @@ window.cmsLogout=function(){
   var LS_MEALS='cm_meals', LS_REST='cm_restaurants';
   var chartYear, chartMonth;
 
-  function loadMeals(){try{return JSON.parse(localStorage.getItem(LS_MEALS)||'{}');}catch(e){return {};}}
-  function saveMeals(d){localStorage.setItem(LS_MEALS,JSON.stringify(d));}
-  function loadRest(){try{return JSON.parse(localStorage.getItem(LS_REST)||'[]');}catch(e){return[];}}
-  function saveRest(a){localStorage.setItem(LS_REST,JSON.stringify(a));}
-  function getTeams(){return JSON.parse(localStorage.getItem('cm_teams')||'[]');}
-  function getAtt(){return JSON.parse(localStorage.getItem('cm_attendance')||'{}');}
+  function loadMeals(){try{return JSON.parse(localStorage.getItem(siteKey('cm_meals'))||'{}');}catch(e){return {};}}
+  function saveMeals(d){localStorage.setItem(siteKey('cm_meals'),JSON.stringify(d));}
+  function loadRest(){try{return JSON.parse(localStorage.getItem(siteKey('cm_restaurants'))||'[]');}catch(e){return[];}}
+  function saveRest(a){localStorage.setItem(siteKey('cm_restaurants'),JSON.stringify(a));}
+  function getTeams(){return JSON.parse(localStorage.getItem(siteKey('cm_teams'))||'[]');}
+  function getAtt(){return JSON.parse(localStorage.getItem(siteKey('cm_attendance'))||'{}');}
 
   function findTeam(name,teams){
     for(var i=0;i<teams.length;i++){
@@ -10869,7 +12497,7 @@ window.cmsLogout=function(){
     }
 
     var dayMeals=meals[date]||{};
-    var workersArr=JSON.parse(localStorage.getItem('cm_workers')||'[]');
+    var workersArr=JSON.parse(localStorage.getItem(siteKey('cm_workers'))||'[]');
     var lodgingMap={};
     workersArr.forEach(function(w){lodgingMap[w.name]=!!w.lodging;});
 
@@ -10997,7 +12625,7 @@ window.cmsLogout=function(){
       var date=document.getElementById('meal-date').value;
       var att=getAtt(), teams=getTeams(), meals=loadMeals();
       var dayAtt=att[date]||{}, dayMeals=meals[date]||{};
-      var workersArr=JSON.parse(localStorage.getItem('cm_workers')||'[]');
+      var workersArr=JSON.parse(localStorage.getItem(siteKey('cm_workers'))||'[]');
       var lodgingMap={};
       workersArr.forEach(function(w){lodgingMap[w.name]=!!w.lodging;});
 
