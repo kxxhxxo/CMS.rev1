@@ -431,6 +431,10 @@
   }
   .table tr:last-child td { border-bottom: none; }
   .table tr:hover td { background: var(--surface2); color: var(--text); }
+  .table.table-grid th { border-right: 1px solid var(--border); }
+  .table.table-grid th:last-child { border-right: none; }
+  .table.table-grid td { border-right: 1px solid rgba(48,54,61,0.15); }
+  .table.table-grid td:last-child { border-right: none; }
 
   /* STATUS BADGE */
   .badge {
@@ -3568,21 +3572,15 @@ window.cmsLogout=function(){
               </div>
             </div>
             <div style="overflow-x:auto">
-              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:750px">
+              <table class="table table-grid" style="font-size:12px;min-width:750px">
                 <thead>
-                  <tr>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:200px">구 분</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:90px">팀장 / 거래처</th>
-                    <th colspan="3" style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center">금 회 투 입</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:100px">증빙 / 비고</th>
-                  </tr>
-                  <tr>
-                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa"></th>
-                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa"></th>
-                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa;text-align:right;min-width:110px;font-weight:700">공급가액</th>
-                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa;text-align:right;min-width:80px;font-weight:700">V.A.T</th>
-                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa;text-align:right;min-width:110px;font-weight:700">합 계</th>
-                    <th style="border:1px solid #ccc;padding:6px;background:#fafafa"></th>
+                  <tr style="background:var(--surface2)">
+                    <th style="min-width:200px">구 분</th>
+                    <th style="min-width:90px">팀장 / 거래처</th>
+                    <th style="text-align:right;min-width:110px">공급가액</th>
+                    <th style="text-align:right;min-width:80px">V.A.T</th>
+                    <th style="text-align:right;min-width:110px">합 계</th>
+                    <th style="min-width:100px">증빙 / 비고</th>
                   </tr>
                 </thead>
                 <tbody id="fund-detail-tbody"></tbody>
@@ -3598,18 +3596,18 @@ window.cmsLogout=function(){
           <div class="card" style="margin-bottom:16px">
             <div style="padding:24px;max-width:900px;margin:0 auto">
               <!-- 결재란 -->
-              <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px">
-                <tr>
-                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:70px">보존기한</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">5년</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:65px">현장소장</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px" id="fund-appr-manager">-</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:45px">PM</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">-</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:45px">전무</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">-</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;background:#f5f5f5;font-weight:700;text-align:center;width:60px">대표이사</td>
-                  <td style="border:1px solid #bbb;padding:9px 12px;text-align:center;width:70px">-</td>
+              <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px;border-radius:8px;overflow:hidden">
+                <tr style="background:var(--surface2)">
+                  <td style="padding:10px 12px;font-weight:700;text-align:center;width:70px;border-right:1px solid var(--border)">보존기한</td>
+                  <td style="padding:10px 12px;text-align:center;width:70px;border-right:1px solid var(--border)">5년</td>
+                  <td style="padding:10px 12px;font-weight:700;text-align:center;width:65px;background:var(--surface2);border-right:1px solid var(--border)">현장소장</td>
+                  <td style="padding:10px 12px;text-align:center;width:70px;border-right:1px solid var(--border)" id="fund-appr-manager">-</td>
+                  <td style="padding:10px 12px;font-weight:700;text-align:center;width:45px;background:var(--surface2);border-right:1px solid var(--border)">PM</td>
+                  <td style="padding:10px 12px;text-align:center;width:70px;border-right:1px solid var(--border)">-</td>
+                  <td style="padding:10px 12px;font-weight:700;text-align:center;width:45px;background:var(--surface2);border-right:1px solid var(--border)">전무</td>
+                  <td style="padding:10px 12px;text-align:center;width:70px;border-right:1px solid var(--border)">-</td>
+                  <td style="padding:10px 12px;font-weight:700;text-align:center;width:60px;background:var(--surface2);border-right:1px solid var(--border)">대표이사</td>
+                  <td style="padding:10px 12px;text-align:center;width:70px">-</td>
                 </tr>
               </table>
 
@@ -3642,17 +3640,17 @@ window.cmsLogout=function(){
               <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">📄 PDF</button>
             </div>
             <div style="overflow-x:auto">
-              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:950px">
+              <table class="table table-grid" style="font-size:12px;min-width:950px">
                 <thead>
-                  <tr>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:center;min-width:140px">구 분</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:110px">도급/하도급<br>[A]</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:100px">실행예산<br>[B]</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:100px">전회투입<br>[C]</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#fafafa;font-weight:800;text-align:right;min-width:110px;border-color:#c62828;border-width:2px">금회투입<br>[D]</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:110px">누계금액<br>[E]=[C]+[D]</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:100px">잔여금액<br>[B]-[E]</th>
-                    <th style="border:1.5px solid #999;padding:8px;background:#f5f5f5;font-weight:800;text-align:right;min-width:70px">집행률[%]<br>[E]/[B]</th>
+                  <tr style="background:var(--surface2)">
+                    <th style="min-width:140px">구 분</th>
+                    <th style="text-align:right;min-width:100px">도급/하도급 [A]</th>
+                    <th style="text-align:right;min-width:90px">실행예산 [B]</th>
+                    <th style="text-align:right;min-width:90px">전회투입 [C]</th>
+                    <th style="text-align:right;min-width:100px;color:var(--accent);font-weight:800">금회투입 [D]</th>
+                    <th style="text-align:right;min-width:100px">누계 [E]</th>
+                    <th style="text-align:right;min-width:90px">잔여금액</th>
+                    <th style="text-align:right;min-width:65px">집행률</th>
                   </tr>
                 </thead>
                 <tbody id="fund-summary-tbody"></tbody>
@@ -3664,7 +3662,7 @@ window.cmsLogout=function(){
           <div class="card" style="margin-top:16px">
             <div class="card-header"><div class="card-title">하도급 계약 현황</div></div>
             <div style="overflow-x:auto">
-              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px" id="fund-contract-table">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px" class="table table-grid" id="fund-contract-table">
                 <thead id="fund-contract-thead"></thead>
                 <tbody id="fund-contract-tbody">
                   <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">도급현황 데이터 로딩 중...</td></tr>
@@ -11921,6 +11919,38 @@ window.cmsLogout=function(){
     renderFundContract();
   }
 
+  // 공종별 공정률 계산 (자금청구용)
+  function getFundProgressByGongjong() {
+    var BDATA = JSON.parse(localStorage.getItem(siteKey('cm_building_data')) || '{}');
+    var BLIST = Object.keys(BDATA);
+    var csData = JSON.parse(localStorage.getItem(siteKey('cm_cs_status')) || '{}');
+    var contracts = JSON.parse(localStorage.getItem(siteKey('cm_contract_rows')) || '[]');
+    var seen = {};
+    var gjList = contracts.filter(function(r){return (r.silhaeng?.danga||0)>0;}).map(function(r){return r.gongjong;}).filter(function(gj){if(seen[gj]) return false; seen[gj]=true; return true;});
+
+    var result = {};
+    gjList.forEach(function(gj) {
+      var done = 0, total = 0;
+      BLIST.forEach(function(b) {
+        var floorData = BDATA[b] || {};
+        Object.keys(floorData).forEach(function(fl) {
+          var units = floorData[fl];
+          var unitCnt = Object.keys(units).length;
+          total += unitCnt;
+          if (csData[b] && csData[b][fl] && csData[b][fl][gj] === 'done') done += unitCnt;
+        });
+      });
+      result[gj] = total ? Math.round(done / total * 100) : 0;
+    });
+
+    // 전체 공정률
+    var gDone = 0, gTotal = 0;
+    Object.keys(result).forEach(function(gj) { gDone += result[gj]; gTotal += 100; });
+    result['__overall__'] = gTotal ? Math.round(gDone / Object.keys(result).length) : 0;
+
+    return result;
+  }
+
   window.renderFundDetail = function() {
     var tbody = document.getElementById('fund-detail-tbody');
     if (!tbody) return;
@@ -12009,9 +12039,15 @@ window.cmsLogout=function(){
     // ── HTML 생성 ──
     var html = '';
     var grandSupply = 0, grandVat = 0;
-    var bd = 'border:1px solid #ddd;padding:7px 10px;';
-    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;';
-    var subBd = 'border:1px solid #bbb;padding:7px 10px;background:#f5f5f5;font-weight:800;';
+    var bd = 'padding:8px 10px;';
+    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;font-weight:500;';
+    var subBd = 'padding:8px 10px;background:var(--surface2);font-weight:800;';
+    var progress = getFundProgressByGongjong();
+    var rowId = 0;
+
+    function makeToggle(id) { return 'onclick="var el=document.getElementById(\'fd-' + id + '\');el.style.display=el.style.display===\'none\'?\'\':\' none\'" style="cursor:pointer" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'\'"'; }
+    function detailHeader() { return '<td colspan="6" style="padding:0"><div style="background:#f8fafc;padding:10px 16px;border-top:1px dashed var(--border)"><table style="width:100%;font-size:11px;border-collapse:collapse">'; }
+    function detailFooter() { return '</table></div></td>'; }
 
     // 현장명 표시
     var siteNameEl = document.getElementById('fund-site-name');
@@ -12021,63 +12057,151 @@ window.cmsLogout=function(){
       siteNameEl.textContent = pj ? '현장명 : ' + pj.name : '';
     }
 
-    // 노무비 - 직영 (정규직)
+    // ── 노무비 · 직영 ──
     var gjKeys = Object.keys(laborByGongjong);
-    var laborRowCount = gjKeys.length + 1;
-    if (!gjKeys.length) laborRowCount = 2;
+    var overallProg = progress['__overall__'] || 0;
+    var rid1 = rowId++;
 
-    html += '<tr><td style="' + bd + '"><b>노무비</b> · 직영 (정규직)</td><td style="' + bd + 'font-size:11px;color:#666">소장/공무/직영</td>';
-    html += '<td style="' + bdR + '">' + f(staffTotal) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(staffTotal) + '</td>';
+    // 직영 노무관리 인원 (gongjong === '직영공사' 등)
+    var staffWorkerList = [];
+    workers.forEach(function(w) {
+      if (w.isStaff) return;
+      var gj = w.gongjong || w.job || '기타';
+      if (gj !== '직영공사' && gj !== '직영') return;
+      var days = monthlyAtt[w.name] || 0;
+      if (days === 0 && w.empType !== 'monthly') return;
+      var pay = w.empType === 'monthly' ? (Number(w.wage)||0) : Math.round((Number(w.wage)||0) * days);
+      staffWorkerList.push({ name: w.name, job: w.job || '-', empType: w.empType, wage: Number(w.wage)||0, days: days, pay: pay });
+    });
+
+    var directTotal = staffTotal;
+    staffWorkerList.forEach(function(sw) { directTotal += sw.pay; });
+
+    html += '<tr ' + makeToggle(rid1) + '><td style="' + bd + '"><b>노무비</b> · 직영 <span style="font-size:10px;color:var(--text3);margin-left:4px">▼ 상세</span></td><td style="' + bd + 'font-size:11px;color:#666">소장/공무/직영</td>';
+    html += '<td style="' + bdR + '">' + f(directTotal) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(directTotal) + '</td>';
     html += '<td style="' + bd + 'font-size:10px;color:#888">노무비지급명세서</td></tr>';
-    grandSupply += staffTotal;
+    // 직영 세부
+    html += '<tr id="fd-' + rid1 + '" style="display:none">' + detailHeader();
+    html += '<tr style="color:var(--text3)"><td style="padding:4px 8px;font-weight:700">성명</td><td style="padding:4px 8px;font-weight:700">직종</td><td style="padding:4px 8px;font-weight:700">구분</td><td style="padding:4px 8px;text-align:right;font-weight:700">단가/월급</td><td style="padding:4px 8px;text-align:right;font-weight:700">공수</td><td style="padding:4px 8px;text-align:right;font-weight:700">금액</td></tr>';
+    siteStaff.forEach(function(s) {
+      var c = calcPayForStaff(s);
+      html += '<tr><td style="padding:3px 8px;font-weight:600">' + s.name + '</td><td style="padding:3px 8px">' + (s.job||'-') + '</td><td style="padding:3px 8px"><span style="background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:3px;font-size:10px">정규직</span></td><td style="padding:3px 8px;text-align:right">' + f(c.gross) + '</td><td style="padding:3px 8px;text-align:right;color:#aaa">-</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f(c.gross) + '</td></tr>';
+    });
+    staffWorkerList.forEach(function(sw) {
+      html += '<tr><td style="padding:3px 8px;font-weight:600">' + sw.name + '</td><td style="padding:3px 8px">' + sw.job + '</td><td style="padding:3px 8px"><span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;font-size:10px">' + (sw.empType==='monthly'?'월급':'일당') + '</span></td><td style="padding:3px 8px;text-align:right">' + f(sw.wage) + '</td><td style="padding:3px 8px;text-align:right">' + (sw.empType==='monthly'?'-':sw.days+'공수') + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f(sw.pay) + '</td></tr>';
+    });
+    html += detailFooter() + '</tr>';
+    grandSupply += directTotal;
 
+    // ── 노무비 · 공종별 ──
     if (!gjKeys.length) {
       html += '<tr><td style="' + bd + 'color:#aaa;font-size:11px;padding-left:24px">출역 없음</td><td style="' + bd + '"></td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bd + '"></td></tr>';
     }
     gjKeys.forEach(function(gj) {
+      if (gj === '직영공사' || gj === '직영') return; // 직영은 위에서 처리
       var amt = laborByGongjong[gj];
       grandSupply += amt;
-      html += '<tr><td style="' + bd + 'font-size:11px;padding-left:24px">' + gj + '</td><td style="' + bd + 'font-size:11px"></td>';
+      var gjProg = progress[gj] || 0;
+      var rid = rowId++;
+      html += '<tr ' + makeToggle(rid) + '><td style="' + bd + 'font-size:11px;padding-left:24px">' + gj + ' <span style="font-size:10px;color:var(--text3)">▼</span></td><td style="' + bd + 'font-size:11px"></td>';
       html += '<td style="' + bdR + '">' + f(amt) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(amt) + '</td>';
-      html += '<td style="' + bd + 'font-size:10px;color:#888">노무비지급명세서</td></tr>';
+      html += '<td style="' + bd + 'font-size:11px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + gjProg + '%;background:' + (gjProg >= 100 ? '#2e7d32' : 'var(--accent)') + ';border-radius:3px"></div></div><span style="font-weight:600;color:' + (gjProg >= 100 ? '#2e7d32' : 'var(--text2)') + ';min-width:32px;text-align:right">' + gjProg + '%</span></div></td></tr>';
+      // 공종별 세부
+      html += '<tr id="fd-' + rid + '" style="display:none">' + detailHeader();
+      html += '<tr style="color:var(--text3)"><td style="padding:4px 8px;font-weight:700">성명</td><td style="padding:4px 8px;font-weight:700">직종</td><td style="padding:4px 8px;font-weight:700">구분</td><td style="padding:4px 8px;text-align:right;font-weight:700">단가</td><td style="padding:4px 8px;text-align:right;font-weight:700">공수</td><td style="padding:4px 8px;text-align:right;font-weight:700">금액</td></tr>';
+      workers.forEach(function(w) {
+        if (w.isStaff) return;
+        var wgj = w.gongjong || w.job || '기타';
+        if (wgj !== gj) return;
+        var days = monthlyAtt[w.name] || 0;
+        if (days === 0 && w.empType !== 'monthly') return;
+        var pay = w.empType === 'monthly' ? (Number(w.wage)||0) : Math.round((Number(w.wage)||0) * days);
+        html += '<tr><td style="padding:3px 8px;font-weight:600">' + w.name + '</td><td style="padding:3px 8px">' + (w.job||'-') + '</td><td style="padding:3px 8px"><span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;font-size:10px">' + (w.empType==='monthly'?'월급':'일당') + '</span></td><td style="padding:3px 8px;text-align:right">' + f(Number(w.wage)||0) + '</td><td style="padding:3px 8px;text-align:right">' + (w.empType==='monthly'?'-':days+'공수') + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f(pay) + '</td></tr>';
+      });
+      html += detailFooter() + '</tr>';
     });
 
     // 노무비 소계
-    var laborTotal = staffTotal + gjKeys.reduce(function(s, k) { return s + laborByGongjong[k]; }, 0);
+    var laborTotal = directTotal + gjKeys.reduce(function(s, k) { return (k==='직영공사'||k==='직영') ? s : s + laborByGongjong[k]; }, 0);
     html += '<tr><td style="' + subBd + 'text-align:center">소 계</td><td style="' + subBd + '"></td>';
     html += '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(laborTotal) + '</td><td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(laborTotal) + '</td><td style="' + subBd + '"></td></tr>';
 
-    // 식대
-    html += '<tr><td style="' + bd + '"><b>식대</b> · 직영</td><td style="' + bd + 'font-size:11px"></td>';
+    // ── 식대 ──
+    var ridMeal = rowId++;
+    html += '<tr ' + makeToggle(ridMeal) + '><td style="' + bd + '"><b>식대</b> · 직영 <span style="font-size:10px;color:var(--text3)">▼ 상세</span></td><td style="' + bd + 'font-size:11px"></td>';
     html += '<td style="' + bdR + '">' + f(mealTotal) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + 'font-weight:700">' + f(mealTotal) + '</td>';
     html += '<td style="' + bd + 'font-size:10px;color:#888">세금계산서</td></tr>';
     grandSupply += mealTotal;
+    // 식대 세부: 인원별 식수 집계
+    html += '<tr id="fd-' + ridMeal + '" style="display:none">' + detailHeader();
+    html += '<tr style="color:var(--text3)"><td style="padding:4px 8px;font-weight:700;width:30px">No</td><td style="padding:4px 8px;font-weight:700">직종</td><td style="padding:4px 8px;font-weight:700">이름</td><td style="padding:4px 8px;text-align:right;font-weight:700">출역</td><td style="padding:4px 8px;text-align:right;font-weight:700">조식</td><td style="padding:4px 8px;text-align:right;font-weight:700">중식</td><td style="padding:4px 8px;text-align:right;font-weight:700">석식</td><td style="padding:4px 8px;text-align:right;font-weight:700">소계</td><td style="padding:4px 8px;text-align:right;font-weight:700">단가</td><td style="padding:4px 8px;text-align:right;font-weight:700">금액</td></tr>';
+
+    // 인원별 월간 식수 집계
+    var mealDays = Object.keys(meals).filter(function(dk){return dk.substring(0,7)===month;}).sort();
+    var personMeals = {}; // { name: { b:0, l:0, d:0 } }
+    mealDays.forEach(function(dk) {
+      var dm = meals[dk];
+      Object.keys(dm).forEach(function(nm) {
+        var m = dm[nm]; if (!m) return;
+        if (!personMeals[nm]) personMeals[nm] = { b:0, l:0, d:0 };
+        if (m.b) personMeals[nm].b++;
+        if (m.l) personMeals[nm].l++;
+        if (m.d) personMeals[nm].d++;
+      });
+    });
+
+    // 인원별 출역일수 + 직종 매핑
+    var allMerged = getMergedWorkers();
+    var mealBTotal=0, mealLTotal=0, mealDTotal=0, mealAmtTotal=0;
+    var personNames = Object.keys(personMeals).sort();
+    personNames.forEach(function(nm, idx) {
+      var pm = personMeals[nm];
+      var w = allMerged.find(function(x){return x.name===nm;});
+      var job = w ? (w.job||'-') : '-';
+      var attDays = monthlyAtt[nm] || 0;
+      var mealCount = pm.b + pm.l + pm.d;
+      // 평균 단가 = 총 식대 / 총 식수
+      var personAmt = pm.b * defaultPrices.b + pm.l * defaultPrices.l + pm.d * defaultPrices.d;
+      var avgPrice = mealCount ? Math.round(personAmt / mealCount) : 0;
+      mealBTotal += pm.b; mealLTotal += pm.l; mealDTotal += pm.d; mealAmtTotal += personAmt;
+      html += '<tr><td style="padding:3px 8px;text-align:center;color:var(--text3)">' + (idx+1) + '</td><td style="padding:3px 8px">' + job + '</td><td style="padding:3px 8px;font-weight:600">' + nm + '</td><td style="padding:3px 8px;text-align:right">' + (attDays||'-') + '</td><td style="padding:3px 8px;text-align:right">' + (pm.b||'') + '</td><td style="padding:3px 8px;text-align:right">' + (pm.l||'') + '</td><td style="padding:3px 8px;text-align:right">' + (pm.d||'') + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + mealCount + '</td><td style="padding:3px 8px;text-align:right">' + f(avgPrice) + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f(personAmt) + '</td></tr>';
+    });
+    html += '<tr style="font-weight:700;border-top:1px solid var(--border)"><td style="padding:4px 8px" colspan="3">합계 (' + personNames.length + '명)</td><td style="padding:4px 8px"></td><td style="padding:4px 8px;text-align:right">' + mealBTotal + '</td><td style="padding:4px 8px;text-align:right">' + mealLTotal + '</td><td style="padding:4px 8px;text-align:right">' + mealDTotal + '</td><td style="padding:4px 8px;text-align:right">' + (mealBTotal+mealLTotal+mealDTotal) + '</td><td style="padding:4px 8px"></td><td style="padding:4px 8px;text-align:right;color:var(--accent)">' + f(mealAmtTotal) + '</td></tr>';
+    html += detailFooter() + '</tr>';
 
     // 식대 소계
     html += '<tr><td style="' + subBd + 'text-align:center">소 계</td><td style="' + subBd + '"></td>';
     html += '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(mealTotal) + '</td><td style="' + subBd + 'text-align:right">-</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(mealTotal) + '</td><td style="' + subBd + '"></td></tr>';
 
     // ── 현장경비 ──
-    var expCard = { supply: 0, vat: 0 };
-    var expCash = { supply: 0, vat: 0 };
+    var expCard = { supply: 0, vat: 0, items: [] };
+    var expCash = { supply: 0, vat: 0, items: [] };
     var expTax = [];
-    var expHQ = { supply: 0, vat: 0 };
+    var expHQ = { supply: 0, vat: 0, items: [] };
     monthExp.forEach(function(d) {
       var s = d.amount || 0, v = d.vat || 0;
-      if (d.type === '법인카드') { expCard.supply += s; expCard.vat += v; }
-      else if (d.type === '현금' || d.type === '전도금') { expCash.supply += s; expCash.vat += v; }
-      else if (d.type === '세금계산서') { expTax.push({ usage: d.usage || d.desc || '-', vendor: d.vendor || '', supply: s, vat: v }); }
-      else if (d.type === '본사집행분') { expHQ.supply += s; expHQ.vat += v; }
+      if (d.type === '법인카드') { expCard.supply += s; expCard.vat += v; expCard.items.push(d); }
+      else if (d.type === '현금' || d.type === '전도금') { expCash.supply += s; expCash.vat += v; expCash.items.push(d); }
+      else if (d.type === '세금계산서') { expTax.push(d); }
+      else if (d.type === '본사집행분') { expHQ.supply += s; expHQ.vat += v; expHQ.items.push(d); }
     });
 
+    function expDetailRows(items) {
+      var h = '<tr style="color:var(--text3)"><td style="padding:4px 8px;font-weight:700">일자</td><td style="padding:4px 8px;font-weight:700">용도</td><td style="padding:4px 8px;font-weight:700">내용</td><td style="padding:4px 8px;text-align:right;font-weight:700">공급가</td><td style="padding:4px 8px;text-align:right;font-weight:700">VAT</td><td style="padding:4px 8px;text-align:right;font-weight:700">합계</td></tr>';
+      items.forEach(function(d) {
+        h += '<tr><td style="padding:3px 8px">' + (d.date||'-').substring(5) + '</td><td style="padding:3px 8px">' + (d.usage||'-') + '</td><td style="padding:3px 8px">' + (d.desc||'-') + '</td><td style="padding:3px 8px;text-align:right">' + f(d.amount||0) + '</td><td style="padding:3px 8px;text-align:right">' + f(d.vat||0) + '</td><td style="padding:3px 8px;text-align:right;font-weight:600">' + f((d.amount||0)+(d.vat||0)) + '</td></tr>';
+      });
+      return h;
+    }
+
     var expRows = [];
-    if (expCard.supply + expCard.vat > 0) expRows.push({ label: '<b>현장경비</b> · 법인카드', vendor: '1식', supply: expCard.supply, vat: expCard.vat, proof: '법인카드' });
-    if (expCash.supply + expCash.vat > 0) expRows.push({ label: (expRows.length ? '' : '<b>현장경비</b> · ') + '현금/전도금', vendor: '1식', supply: expCash.supply, vat: expCash.vat, proof: '지출증빙' });
+    if (expCard.supply + expCard.vat > 0) expRows.push({ label: '<b>현장경비</b> · 법인카드', vendor: '1식', supply: expCard.supply, vat: expCard.vat, proof: '법인카드', items: expCard.items });
+    if (expCash.supply + expCash.vat > 0) expRows.push({ label: (expRows.length ? '' : '<b>현장경비</b> · ') + '현금/전도금', vendor: '1식', supply: expCash.supply, vat: expCash.vat, proof: '지출증빙', items: expCash.items });
     expTax.forEach(function(t, i) {
       var prefix = (!expRows.length && i === 0) ? '<b>현장경비</b> · ' : '';
-      expRows.push({ label: prefix + t.usage, vendor: t.vendor, supply: t.supply, vat: t.vat, proof: '세금계산서' });
+      expRows.push({ label: prefix + (t.usage||t.desc||'-'), vendor: t.vendor||'', supply: t.amount||0, vat: t.vat||0, proof: '세금계산서', items: [t] });
     });
-    if (expHQ.supply + expHQ.vat > 0) expRows.push({ label: (expRows.length ? '' : '<b>현장경비</b> · ') + '본사집행분', vendor: '1식', supply: expHQ.supply, vat: expHQ.vat, proof: '본사집행' });
+    if (expHQ.supply + expHQ.vat > 0) expRows.push({ label: (expRows.length ? '' : '<b>현장경비</b> · ') + '본사집행분', vendor: '1식', supply: expHQ.supply, vat: expHQ.vat, proof: '본사집행', items: expHQ.items });
 
     if (expRows.length) {
       var expSupplyTotal = 0, expVatTotal = 0;
@@ -12085,9 +12209,14 @@ window.cmsLogout=function(){
         var total = r.supply + r.vat;
         expSupplyTotal += r.supply; expVatTotal += r.vat;
         grandSupply += r.supply; grandVat += r.vat;
-        html += '<tr><td style="' + bd + 'font-size:11px;' + (i > 0 ? 'padding-left:24px' : '') + '">' + r.label + '</td><td style="' + bd + 'font-size:11px;color:#666">' + r.vendor + '</td>';
+        var rid = rowId++;
+        var hasDetail = r.items && r.items.length > 0;
+        html += '<tr ' + (hasDetail ? makeToggle(rid) : '') + '><td style="' + bd + 'font-size:11px;' + (i > 0 ? 'padding-left:24px' : '') + '">' + r.label + (hasDetail ? ' <span style="font-size:10px;color:var(--text3)">▼</span>' : '') + '</td><td style="' + bd + 'font-size:11px;color:#666">' + r.vendor + '</td>';
         html += '<td style="' + bdR + '">' + f(r.supply) + '</td><td style="' + bdR + '">' + f(r.vat) + '</td><td style="' + bdR + 'font-weight:700">' + f(total) + '</td>';
         html += '<td style="' + bd + 'font-size:10px;color:#888">' + r.proof + '</td></tr>';
+        if (hasDetail) {
+          html += '<tr id="fd-' + rid + '" style="display:none">' + detailHeader() + expDetailRows(r.items) + detailFooter() + '</tr>';
+        }
       });
       html += '<tr><td style="' + subBd + 'text-align:center">소 계</td><td style="' + subBd + '"></td>';
       html += '<td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(expSupplyTotal) + '</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(expVatTotal) + '</td><td style="' + subBd + 'text-align:right;font-variant-numeric:tabular-nums">' + f(expSupplyTotal + expVatTotal) + '</td><td style="' + subBd + '"></td></tr>';
@@ -12097,11 +12226,11 @@ window.cmsLogout=function(){
 
     // 합계
     var grandTotal = grandSupply + grandVat;
-    html += '<tr><td colspan="2" style="border:1.5px solid #999;padding:10px;background:#eee;text-align:center;font-weight:900;font-size:13px">합 계</td>';
-    html += '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-size:13px;font-variant-numeric:tabular-nums">' + f(grandSupply) + '</td>';
-    html += '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-variant-numeric:tabular-nums">' + f(grandVat) + '</td>';
-    html += '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-size:14px;color:#c62828;font-variant-numeric:tabular-nums">' + f(grandTotal) + '</td>';
-    html += '<td style="border:1.5px solid #999;padding:10px;background:#eee"></td></tr>';
+    html += '<tr><td colspan="2" style="padding:10px;background:var(--surface2);text-align:center;font-weight:900;font-size:13px">합 계</td>';
+    html += '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900;font-size:13px;font-variant-numeric:tabular-nums">' + f(grandSupply) + '</td>';
+    html += '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900;font-variant-numeric:tabular-nums">' + f(grandVat) + '</td>';
+    html += '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900;font-size:14px;color:#c62828;font-variant-numeric:tabular-nums">' + f(grandTotal) + '</td>';
+    html += '<td style="padding:10px;background:var(--surface2)"></td></tr>';
 
     tbody.innerHTML = html;
   }
@@ -12171,9 +12300,9 @@ window.cmsLogout=function(){
       { name: '본사관리비(7%)', current: 0 },
     ];
     var grand = laborTotal + mealTotal + expTotal + expVat;
-    var bd = 'border:1px solid #ddd;padding:7px 10px;';
-    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;';
-    var subBd = 'border:1px solid #bbb;padding:7px 10px;background:#f5f5f5;font-weight:800;';
+    var bd = 'padding:8px 10px;';
+    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;font-weight:500;';
+    var subBd = 'padding:8px 10px;background:var(--surface2);font-weight:800;';
     var html = rows.map(function(r) {
       if (r.isSub) {
         return '<tr><td style="' + subBd + 'text-align:center">' + r.name + '</td>'
@@ -12187,14 +12316,14 @@ window.cmsLogout=function(){
         + '<td style="' + bdR + (hasVal ? 'font-weight:700' : 'color:#aaa') + '">' + f(r.current) + '</td>'
         + '<td style="' + bdR + (hasVal ? '' : 'color:#aaa') + '">' + f(r.current) + '</td><td style="' + bdR + 'color:#aaa">-</td><td style="' + bdR + '">0.0%</td></tr>';
     }).join('');
-    html += '<tr><td style="border:1.5px solid #999;padding:10px;background:#eee;text-align:center;font-weight:900;font-size:13px">합 계</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;font-size:14px;color:#c62828;font-variant-numeric:tabular-nums">' + f(grand) + '</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900;color:#c62828;font-variant-numeric:tabular-nums">' + f(grand) + '</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">-</td>'
-      + '<td style="border:1.5px solid #999;padding:10px;text-align:right;background:#eee;font-weight:900">0.0%</td></tr>';
+    html += '<tr><td style="padding:10px;background:var(--surface2);text-align:center;font-weight:900;font-size:13px">합 계</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900">-</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900">-</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900">-</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900;font-size:14px;color:#c62828;font-variant-numeric:tabular-nums">' + f(grand) + '</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900;color:#c62828;font-variant-numeric:tabular-nums">' + f(grand) + '</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900">-</td>'
+      + '<td style="padding:10px;text-align:right;background:var(--surface2);font-weight:900">0.0%</td></tr>';
     tbody.innerHTML = html;
   }
 
@@ -12288,8 +12417,8 @@ window.cmsLogout=function(){
     var pivot = pjData.pivotData || { columns: [], cells: {} };
     var cols = pivot.columns || [];
     var f = function(v) { return v ? Number(v).toLocaleString() : '-'; };
-    var bd = 'border:1px solid #ddd;padding:7px 10px;';
-    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;';
+    var bd = 'padding:8px 10px;';
+    var bdR = bd + 'text-align:right;font-variant-numeric:tabular-nums;font-weight:500;';
 
     if (!cols.length) {
       thead.innerHTML = '';
